@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Ridge vs Lasso</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Ridge vs Lasso</h1>
+    <p class="subtitle">Where the Hookean analogy breaks, on purpose &mdash; and why that break gives you exact zeros.</p>
+
+    <p>
+      Shrink a single noisy estimate $y$ (mass $\phi$) toward zero and you get two textbook
+      estimators depending on the shape of the penalty. Both are &ldquo;a device pulling the
+      bead toward the origin&rdquo;; they differ in what kind of device.
+    </p>
+    <p>
+      <strong>Ridge</strong> is an ordinary Hookean spring of stiffness $\lambda$ anchored at
+      $0$: force $-\lambda z$, energy $\tfrac12\lambda z^2$. Its pull weakens as the bead nears
+      zero, so equilibrium $z^\ast_{\text{ridge}} = \phi y/(\phi+\lambda)$ approaches zero only
+      in the limit $\lambda \to \infty$ &mdash; shrinkage, never exact sparsity.
+    </p>
+    <p>
+      <strong>Lasso</strong> replaces the spring with a <em>constant-tension</em> device
+      &mdash; mechanically, a cable over a pulley with a hanging weight $\lambda$, always
+      pulling toward $0$ with the <em>same</em> force regardless of distance. Its potential is
+      the cone $\lambda|z|$, non-Hookean precisely at the kink the
+      <a href="./intro.html">introduction&apos;s caveat</a> warns about. Once the data-spring&apos;s
+      pull weakens below $\lambda$, the constant-tension device wins outright and the bead
+      sticks at exactly zero: $z^\ast_{\text{lasso}} = \mathrm{sign}(y)\max(|y| - \lambda/\phi,\, 0)$
+      &mdash; soft-thresholding.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="380"></canvas>
+      <div class="controls">
+        <label><span class="lab">data $y$</span>
+          <input type="range" id="yy" min="-6" max="6" step="0.05" value="3.4"><span class="val" id="yyv"></span></label>
+        <label><span class="lab">data mass $\phi$</span>
+          <input type="range" id="phi" min="0.3" max="4" step="0.02" value="1.5"><span class="val" id="phiv"></span></label>
+        <label><span class="lab">penalty $\lambda$</span>
+          <input type="range" id="lam" min="0" max="8" step="0.02" value="1.5"><span class="val" id="lamv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>ridge estimate <b id="rr"></b></span>
+        <span>lasso estimate <b id="rl"></b></span>
+        <span>dead zone <b id="rdz"></b></span>
+      </div>
+    </div>
+
+    <p>
+      <strong>Raise $\lambda$ past $\phi|y|$</strong> and watch: the ridge bead keeps sliding,
+      slowing down but always moving; the lasso bead stops dead at $0$ and stays there for
+      every larger $\lambda$ &mdash; the shaded dead zone on its rail. This one demo&apos;s
+      simulation is honestly not raw $F=ma$: the kink at $z=0$ makes naive force integration
+      chatter, so the lasso bead is animated via <em>proximal gradient flow</em> (an exact
+      implicit step through the kink each frame) rather than the site&apos;s usual damped
+      spring integrator. The equilibrium it lands on is exactly the one above &mdash; only the
+      transient&apos;s telling is different.
+    </p>
+    <p>
+      The <a href="./dictionary.html">dictionary</a> calls Gaussian priors Hookean for a
+      reason: a Laplace prior on $z$ is exactly what makes the penalty $\lambda|z|$, and its
+      density has a corner at zero that a Gaussian&apos;s never does. Every other demo on this
+      site works because the log-density is a parabola everywhere; this is the one demo about
+      what happens the moment it isn&apos;t.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 380;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', BLUE = '#3a6ea5';
+  const XMIN = -8, XMAX = 8, PAD = 42;
+  const RAIL1 = 150, RAIL2 = 300;
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = { yy: document.getElementById('yy'), phi: document.getElementById('phi'), lam: document.getElementById('lam') };
+  const out = {};
+  ['yyv', 'phiv', 'lamv', 'rr', 'rl', 'rdz'].forEach(id => out[id] = document.getElementById(id));
+  const y = () => parseFloat(ui.yy.value);
+  const phi = () => parseFloat(ui.phi.value);
+  const lam = () => parseFloat(ui.lam.value);
+  const ridgeTarget = () => phi() * y() / (phi() + lam());
+  const lassoTarget = () => Math.sign(y()) * Math.max(Math.abs(y()) - lam() / phi(), 0);
+
+  let zR = 0, vR = 0, zL = 0;
+  const DT = 1 / 60, ZETA = 0.85, OMEGA = 8, STEP = 0.12;
+  function step() {
+    const K = phi() + lam();
+    const F = phi() * (y() - zR) + lam() * (0 - zR);
+    vR += (OMEGA * OMEGA * (F / K) - 2 * ZETA * OMEGA * vR) * DT;
+    zR += vR * DT;
+
+    const grad = phi() * (zL - y());
+    const zhalf = zL - STEP * grad, th = STEP * lam();
+    zL = Math.sign(zhalf) * Math.max(Math.abs(zhalf) - th, 0);
+  }
+
+  const radius = k => 7 + 6.5 * Math.sqrt(k);
+
+  function spring(x1, x2, ypos, amp) {
+    const gap = Math.abs(x2 - x1);
+    if (gap < 14) { ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke(); return; }
+    const n = Math.max(3, Math.round(gap / 30) + 2), dx = (x2 - x1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x1 + dx, ypos);
+    for (let i = 0; i < n * 2; i++) ctx.lineTo(x1 + dx * (i + 1.5), ypos + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+  }
+  function pulley(x1, x2, ypos) {
+    // a taut line to a small pulley wheel at the origin, constant thickness regardless of distance
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x2, ypos, 5, 0, 7); ctx.stroke();
+  }
+
+  function rail(ypos) {
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(px(XMIN) - 6, ypos, px(XMAX) - px(XMIN) + 12, 6, 3); ctx.fill();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const dz = lam() / phi();
+
+    // dead zone on the lasso rail
+    ctx.fillStyle = '#f4efe9';
+    ctx.fillRect(px(-dz), RAIL2 - 24, px(dz) - px(-dz), 30);
+
+    ctx.textAlign = 'left'; ctx.font = '11px sans-serif'; ctx.fillStyle = FAINT;
+    ctx.fillText('ridge: Hookean spring to 0, stiffness λ', PAD - 14, RAIL1 - 60);
+    ctx.fillText('lasso: constant-tension pulley, force λ — shaded: the dead zone |y| ≤ λ/φ', PAD - 14, RAIL2 - 60);
+
+    // origin markers
+    for (const ry of [RAIL1, RAIL2]) {
+      ctx.strokeStyle = '#d8d8d8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(0), ry - 30); ctx.lineTo(px(0), ry + 14); ctx.stroke();
+    }
+
+    // top rail: ridge
+    rail(RAIL1);
+    const y1 = RAIL1 - 12;
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = Math.min(6, 1.4 + lam()); ctx.lineJoin = 'round';
+    spring(px(0), px(zR), y1, 7);
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2;
+    spring(px(y()), px(zR), y1 - 20, 5);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px(y()), y1 - 20, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(zR), y1, 8, 0, 7); ctx.fill(); ctx.stroke();
+
+    // bottom rail: lasso
+    rail(RAIL2);
+    const y2 = RAIL2 - 12;
+    ctx.strokeStyle = BLUE; ctx.lineWidth = 2;
+    pulley(px(zL), px(0), y2);
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2;
+    spring(px(y()), px(zL), y2 - 20, 5);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px(y()), y2 - 20, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = BLUE; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(zL), y2, 8, 0, 7); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = FAINT; ctx.textAlign = 'center'; ctx.font = '11px sans-serif';
+    ctx.fillText('y', px(y()), y1 - 34);
+    ctx.fillText('ridge estimate', px(zR), RAIL1 + 24);
+    ctx.fillText('lasso estimate', px(zL), RAIL2 + 24);
+
+    out.yyv.textContent = y().toFixed(2);
+    out.phiv.textContent = phi().toFixed(2);
+    out.lamv.textContent = lam().toFixed(2);
+    out.rr.textContent = zR.toFixed(3);
+    out.rl.textContent = zL.toFixed(3);
+    out.rdz.textContent = '±' + dz.toFixed(2);
+  }
+
+  document.getElementById('reset').addEventListener('click', () => {
+    ui.yy.value = 3.4; ui.phi.value = 1.5; ui.lam.value = 1.5; zR = 0; vR = 0; zL = 0;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

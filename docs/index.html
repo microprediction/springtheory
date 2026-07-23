@@ -54,7 +54,10 @@
       pooled); slacken it and each bead chases its own observation.
       <strong>Drag an observation</strong> and watch the disturbance propagate a few springs
       down the chain and die out. Most fun: <strong>add an observation</strong> and watch the
-      whole posterior path re-equilibrate to accommodate it.
+      whole posterior path re-equilibrate to accommodate it. This is the <em>smoother</em>
+      &mdash; the whole path relaxing at once. For the <em>filter</em> &mdash; one body running
+      forward through time, tick by tick &mdash; see the
+      <a href="./demo-kalman-filter.html">filter-through-time demo</a>.
     </p>
 
     <h2>What you are looking at: the Kalman smoother as a bead chain</h2>
@@ -92,7 +95,9 @@
       the Kalman <em>filter</em>. The <a href="./intro.html">introduction</a> derives the
       correspondence, the <a href="./dictionary.html">dictionary</a> tabulates it, and the
       <a href="./demos.html">demos page</a> has more exact analogs: evidence fusion, reduced
-      mass, Schur damping, least squares, minimum variance, PCA, and bid-ask bounce.
+      mass, the filter through time, conditioning a Gaussian graph, Schur damping, least
+      squares, minimum variance, PCA, bid-ask bounce, and where the analogy breaks &mdash;
+      Ridge vs Lasso.
     </p>
 
     <div class="bib">

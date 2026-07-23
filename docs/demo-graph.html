@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Conditioning a Gaussian Graph</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Conditioning a Gaussian graph</h1>
+    <p class="subtitle">Pin a node, and a Schur complement ripples through the network.</p>
+
+    <p>
+      Six beads on frictionless vertical rods, joined by springs along a chain &mdash; plus one
+      <strong>shortcut edge</strong> from node 1 to node 4. This is a Gaussian graphical model:
+      the precision matrix is the graph Laplacian of spring stiffnesses (a whisper of ground
+      stiffness $\varepsilon$ keeps every node weakly anchored, so the system is well-posed even
+      with nothing pinned). <strong>Click a node to pin it</strong> at its current value
+      &mdash; that is <em>conditioning</em>: eliminating a variable from a Gaussian is exactly
+      taking the Schur complement of its row and column from the precision matrix, and the
+      remaining beads relax into the exact conditional mean.
+    </p>
+    <p>
+      Pin node 0, then node 5, and watch node 2 in the middle: it moves for both, not just its
+      immediate neighbours &mdash; correlation propagates along every path, attenuated by
+      distance and by the shortcut. Now pin node 1 <em>and</em> drag it: node 4 twitches
+      immediately, skipping straight past nodes 2 and 3 &mdash; conditioning on a graph is not
+      local the way the <a href="./index.html">chain smoother</a> was. <strong>Drag any
+      unpinned node</strong> to nudge it and watch the network restore its shape.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="380"></canvas>
+      <div class="controls">
+        <label><span class="lab">chain stiffness</span>
+          <input type="range" id="kchain" min="0.2" max="4" step="0.05" value="1.2"><span class="val" id="kchainv"></span></label>
+        <label><span class="lab">shortcut stiffness</span>
+          <input type="range" id="kshort" min="0" max="4" step="0.05" value="0.8"><span class="val" id="kshortv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="unpin">Unpin all</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span id="rpins">pinned: none</span>
+        <span class="muted">click a bead to pin/unpin; drag to move it</span>
+      </div>
+    </div>
+
+    <p>
+      This is the multivariate generalisation the <a href="./intro.html">introduction</a>
+      promises in step 6: &ldquo;pinning part of a spring network to the wall&rdquo; is a Schur
+      complement of the joint precision matrix, and the sister site
+      <a href="https://schur.microprediction.org">schur.microprediction.org</a> works out the
+      block version of exactly this move for hierarchical portfolio allocation.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 380;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', PIN = '#b3542e';
+  const N = 6, YMIN = 0, YMAX = 10, PAD = 60;
+  const nx = i => PAD + i / (N - 1) * (W - 2 * PAD);
+  const py = y => H - 34 - (y - YMIN) / (YMAX - YMIN) * (H - 78);
+  const wy = p => YMIN + (H - 34 - p) / (H - 78) * (YMAX - YMIN);
+
+  const ui = { kchain: document.getElementById('kchain'), kshort: document.getElementById('kshort') };
+  const out = { kchainv: document.getElementById('kchainv'), kshortv: document.getElementById('kshortv'), rpins: document.getElementById('rpins') };
+  const kchain = () => parseFloat(ui.kchain.value);
+  const kshort = () => parseFloat(ui.kshort.value);
+  const EPS = 0.05;
+
+  function edges() {
+    const e = [];
+    for (let i = 0; i + 1 < N; i++) e.push([i, i + 1, kchain()]);
+    e.push([1, 4, kshort()]);
+    return e;
+  }
+
+  let z = [4, 5.5, 6, 6.5, 5, 6];
+  let v = z.map(() => 0);
+  let pinned = {};
+
+  const DT = 1 / 60, ZETA = 0.6, OMEGA = 6;
+  function step() {
+    const E = edges(), F = Array(N).fill(0), K = Array(N).fill(EPS);
+    for (const [i, j, k] of E) { F[i] += k * (z[j] - z[i]); F[j] += k * (z[i] - z[j]); K[i] += k; K[j] += k; }
+    for (let i = 0; i < N; i++) F[i] -= EPS * z[i];
+    for (let i = 0; i < N; i++) {
+      if (i in pinned) { z[i] = pinned[i]; v[i] = 0; continue; }
+      v[i] += (OMEGA * OMEGA * (F[i] / K[i]) - 2 * ZETA * OMEGA * v[i]) * DT;
+      z[i] += v[i] * DT;
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // rods
+    ctx.strokeStyle = '#ececec'; ctx.lineWidth = 1;
+    for (let i = 0; i < N; i++) { ctx.beginPath(); ctx.moveTo(nx(i), 26); ctx.lineTo(nx(i), H - 30); ctx.stroke(); }
+
+    // edges
+    for (const [i, j, k] of edges()) {
+      if (k <= 0.001) continue;
+      ctx.strokeStyle = (j - i > 1) ? '#d9b8a6' : '#b5b5b5';
+      ctx.lineWidth = Math.min(6, 1 + 2.2 * k);
+      if (j - i > 1) ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      if (j - i > 1) {
+        const midx = (nx(i) + nx(j)) / 2, midy = Math.min(py(z[i]), py(z[j])) - 46;
+        ctx.moveTo(nx(i), py(z[i])); ctx.quadraticCurveTo(midx, midy, nx(j), py(z[j]));
+      } else { ctx.moveTo(nx(i), py(z[i])); ctx.lineTo(nx(j), py(z[j])); }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    // nodes
+    for (let i = 0; i < N; i++) {
+      const isPin = i in pinned;
+      ctx.fillStyle = isPin ? PIN : ACC;
+      ctx.beginPath(); ctx.arc(nx(i), py(z[i]), isPin ? 9 : 8, 0, 7); ctx.fill();
+      if (isPin) { ctx.strokeStyle = '#7a3a20'; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(i, nx(i), H - 12);
+    }
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('dashed arc: the shortcut edge 1—4', PAD - 20, 20);
+
+    const pins = Object.keys(pinned);
+    out.rpins.textContent = pins.length ? ('pinned: node ' + pins.join(', ')) : 'pinned: none';
+    out.kchainv.textContent = kchain().toFixed(2);
+    out.kshortv.textContent = kshort().toFixed(2);
+  }
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my) {
+    for (let i = 0; i < N; i++) if (Math.hypot(mx - nx(i), my - py(z[i])) < 14) return i;
+    return null;
+  }
+  let downAt = null, moved = false;
+  cv.addEventListener('pointerdown', e => {
+    const i = hit(...evPos(e));
+    downAt = i; moved = false;
+    if (i !== null) { drag = i; cv.setPointerCapture(e.pointerId); }
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag !== null) {
+      moved = true;
+      const val = Math.min(YMAX - 0.2, Math.max(YMIN + 0.2, wy(my)));
+      z[drag] = val; v[drag] = 0;
+      if (drag in pinned) pinned[drag] = val;
+    } else cv.style.cursor = hit(mx, my) !== null ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => {
+    if (drag !== null && !moved) {   // a click, not a drag: toggle pin
+      if (downAt in pinned) delete pinned[downAt];
+      else pinned[downAt] = z[downAt];
+    }
+    drag = null;
+  });
+
+  document.getElementById('unpin').addEventListener('click', () => { pinned = {}; });
+  document.getElementById('reset').addEventListener('click', () => {
+    z = [4, 5.5, 6, 6.5, 5, 6]; v = z.map(() => 0); pinned = {};
+    ui.kchain.value = 1.2; ui.kshort.value = 0.8;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

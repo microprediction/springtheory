@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; The Kalman Filter Through Time</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>The filter through time</h1>
+    <p class="subtitle">One body, waxing and waning: the Kalman filter as it actually runs, tick by tick.</p>
+
+    <p>
+      The <a href="./index.html">smoother</a> relaxes an entire path at once. The
+      <strong>filter</strong> is more like a single body of evolving mass, alternating the two
+      moves from the <a href="./intro.html">introduction</a> as time advances. Each tick:
+    </p>
+    <ol>
+      <li><strong>Predict.</strong> The belief chains through a process-noise spring of
+        stiffness $q = 1/Q$ &mdash; a series composition, so the mass <em>shrinks</em>:
+        $\pi_{\text{pred}} = \pi q/(\pi+q)$, mean unchanged. Watch the body deflate.</li>
+      <li><strong>Update.</strong> If an observation of mass $r=1/R$ arrives, it fuses in
+        parallel &mdash; masses add, $\pi' = \pi_{\text{pred}} + r$ &mdash; and the body
+        relaxes to the new centre of mass. Watch it re-inflate and slide.</li>
+    </ol>
+    <p>
+      Skip an observation and the body just keeps shrinking, unchecked &mdash; staleness with
+      nothing to arrest it. <strong>Play</strong> to watch the filter run, or <strong>Step</strong>
+      one tick at a time. The dashed grey line is the true hidden path; dots are observations
+      (some withheld, per the slider); the solid line is the trail of filtered means.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="440"></canvas>
+      <div class="controls">
+        <label><span class="lab">process stiffness $q$</span>
+          <input type="range" id="lq" min="-1.3" max="1.3" step="0.02" value="0.1"><span class="val" id="lqv"></span></label>
+        <label><span class="lab">obs. stiffness $r$</span>
+          <input type="range" id="lr" min="-1" max="1.3" step="0.02" value="0.4"><span class="val" id="lrv"></span></label>
+        <label><span class="lab">skip probability</span>
+          <input type="range" id="skip" min="0" max="0.85" step="0.02" value="0.25"><span class="val" id="skipv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(110px, max-content));">
+        <button id="play">Play</button>
+        <button id="step">Step</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>tick <b id="rt"></b></span>
+        <span>mass (precision) <b id="rp"></b></span>
+        <span>filtered mean <b id="rm"></b></span>
+        <span id="rphase"></span>
+      </div>
+    </div>
+
+    <p>
+      Filtering is exactly this alternation, run left to right once. Smoothing (the
+      <a href="./index.html">landing-page demo</a>) is what happens if, having reached the end,
+      you let the <em>whole chain</em> relax again with every link present at once &mdash;
+      future evidence now pulls on the past too. Same two moves, same springs; the only
+      difference is whether the chain gets to see its own future before settling.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 440;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', GONE = '#c9c7e6';
+  const PAD = 42, YMIN = 0, YMAX = 10, TMAX = 22;
+  const px = t => PAD + t / (TMAX - 1) * (W - 2 * PAD);
+  const py = y => H - 34 - (y - YMIN) / (YMAX - YMIN) * (H - 78);
+
+  const ui = { lq: document.getElementById('lq'), lr: document.getElementById('lr'), skip: document.getElementById('skip') };
+  const out = {};
+  ['lqv', 'lrv', 'skipv', 'rt', 'rp', 'rm', 'rphase'].forEach(id => out[id] = document.getElementById(id));
+  const q = () => Math.pow(10, parseFloat(ui.lq.value));
+  const r = () => Math.pow(10, parseFloat(ui.lr.value));
+
+  function randn() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function truth(t) { return 5 + 2.4 * Math.sin(t / 3.1) + 0.05 * t; }
+
+  let truePath = [], obsPresent = [], obsY = [];
+  function regen() {
+    truePath = []; obsPresent = []; obsY = [];
+    for (let t = 0; t < TMAX; t++) {
+      truePath.push(truth(t));
+      const present = Math.random() >= parseFloat(ui.skip.value);
+      obsPresent.push(present);
+      obsY.push(present ? Math.min(YMAX - 0.3, Math.max(YMIN + 0.3, truth(t) + 0.8 * randn())) : null);
+    }
+  }
+  regen();
+
+  let t = 0, mean = truePath[0], prec = 1, trail = [{ t: 0, mean }], phase = 'ready';
+  let z = mean, v = 0, animT = 0;   // for the update-phase relaxation
+  let predPrec = prec;
+
+  const DT = 1 / 60, ZETA = 0.85, OMEGA = 10;
+  function tick() {
+    if (t >= TMAX - 1) return;
+    // predict
+    predPrec = prec * q() / (prec + q());
+    prec = predPrec;
+    if (obsPresent[t + 1]) {
+      phase = 'updating'; animT = 0; z = mean; v = 0;
+      t += 1;
+    } else {
+      phase = 'predicted-only';
+      t += 1;
+      trail.push({ t, mean });
+    }
+  }
+
+  function stepPhysics() {
+    if (phase !== 'updating') return;
+    const y = obsY[t], K = predPrec + r();
+    for (let s = 0; s < 2; s++) {
+      const F = predPrec * (mean - z) + r() * (y - z);
+      v += (OMEGA * OMEGA * (F / K) - 2 * ZETA * OMEGA * v) * DT;
+      z += v * DT;
+    }
+    animT += 2 * DT;
+    if (animT > 0.9) {
+      mean = z; prec = K; phase = 'ready';
+      trail.push({ t, mean });
+    }
+  }
+
+  const radius = k => 6 + 6.5 * Math.sqrt(k);
+
+  function vspring(xp, y1, y2, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+    const gap = Math.abs(y2 - y1);
+    if (gap < 10) { ctx.beginPath(); ctx.moveTo(xp, y1); ctx.lineTo(xp, y2); ctx.stroke(); return; }
+    const n = Math.max(2, Math.round(gap / 14) + 1), amp = 5;
+    const dy = (y2 - y1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(xp, y1); ctx.lineTo(xp, y1 + dy);
+    for (let i = 0; i < n * 2; i++) ctx.lineTo(xp + (i % 2 ? amp : -amp), y1 + dy * (i + 1.5));
+    ctx.lineTo(xp, y2 - dy); ctx.lineTo(xp, y2); ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // true path
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = GONE; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= t; i++) i === 0 ? ctx.moveTo(px(i), py(truePath[i])) : ctx.lineTo(px(i), py(truePath[i]));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // observations seen so far
+    for (let i = 0; i <= t; i++) if (obsPresent[i]) {
+      ctx.fillStyle = INK;
+      ctx.beginPath(); ctx.arc(px(i), py(obsY[i]), 5, 0, 7); ctx.fill();
+    }
+
+    // filtered trail
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2.2; ctx.beginPath();
+    trail.forEach((p, i) => i === 0 ? ctx.moveTo(px(p.t), py(p.mean)) : ctx.lineTo(px(p.t), py(p.mean)));
+    ctx.stroke();
+
+    // spring from current observation, if fusing
+    const curY = phase === 'updating' ? z : mean;
+    if (phase === 'updating') vspring(px(t), py(obsY[t]), py(z), '#c4c4c4');
+
+    // the body, sized by mass
+    const curPrec = phase === 'updating' ? predPrec : prec;
+    const rad = radius(curPrec);
+    ctx.fillStyle = ACC;
+    ctx.beginPath(); ctx.arc(px(t), py(curY), rad, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '600 11px sans-serif'; ctx.textAlign = 'center';
+    if (rad > 10) ctx.fillText(curPrec.toFixed(1), px(t), py(curY) + 4);
+
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('dashed: true path   ●: observations   green: filtered mean', PAD - 14, H - 8);
+    ctx.fillText('body radius ∝ √precision', PAD - 14, 22);
+
+    out.lqv.textContent = q().toFixed(2);
+    out.lrv.textContent = r().toFixed(2);
+    out.skipv.textContent = parseFloat(ui.skip.value).toFixed(2);
+    out.rt.textContent = t;
+    out.rp.textContent = curPrec.toFixed(3);
+    out.rm.textContent = mean.toFixed(3);
+    out.rphase.textContent = phase === 'updating' ? 'fusing with observation…' : (obsPresent[t] ? 'settled' : 'no observation — mass only decays');
+  }
+
+  let playing = false, acc = 0;
+  function loop(dtms) {
+    stepPhysics();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  let playTimer = null;
+  document.getElementById('step').addEventListener('click', () => { if (phase === 'ready') tick(); });
+  document.getElementById('play').addEventListener('click', function () {
+    playing = !playing;
+    this.textContent = playing ? 'Pause' : 'Play';
+    if (playing) {
+      playTimer = setInterval(() => { if (phase === 'ready' && t < TMAX - 1) tick(); else if (t >= TMAX - 1) { playing = false; this.textContent = 'Play'; clearInterval(playTimer); } }, 900);
+    } else clearInterval(playTimer);
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    regen(); t = 0; mean = truePath[0]; prec = 1; trail = [{ t: 0, mean }]; phase = 'ready';
+    playing = false; document.getElementById('play').textContent = 'Play'; clearInterval(playTimer);
+  });
+})();
+</script>
+</body>
+</html>

@@ -49,6 +49,18 @@
         away.
       </li>
       <li>
+        <a href="./demo-kalman-filter.html"><strong>The filter through time</strong></a>
+        &mdash; one body of evolving mass, alternating predict (mass shrinks through a series
+        spring) and update (mass grows by fusion) tick by tick. Play it, or step through by
+        hand; skip observations and watch staleness go unchecked.
+      </li>
+      <li>
+        <a href="./demo-graph.html"><strong>Conditioning a Gaussian graph</strong></a> &mdash;
+        six beads on a chain plus a non-local shortcut edge. Pin any node and the rest relax
+        into the exact conditional mean &mdash; a Schur complement of the graph&apos;s
+        precision matrix, propagating along every path, not just to nearest neighbours.
+      </li>
+      <li>
         <a href="./demo-schur-damping.html"><strong>Schur damping</strong></a> &mdash;
         eliminating the chain&apos;s free joint is a scalar Schur complement; the &gamma; dial
         keeps only a fraction of the joint&apos;s recoil, sliding between clamped-to-the-data
@@ -87,6 +99,12 @@
         attach the regression rod&apos;s springs through frictionless collars and they pull
         perpendicular: the rod relaxes to the first principal component, and balances unstably
         on the second. Pearson&apos;s 1901 &ldquo;line of closest fit,&rdquo; literally.
+      </li>
+      <li>
+        <a href="./demo-lasso.html"><strong>Ridge vs Lasso</strong></a> &mdash; where the
+        Hookean analogy breaks, on purpose. Ridge is an ordinary spring to zero; Lasso swaps it
+        for a constant-tension pulley, and once the data spring&apos;s pull weakens below the
+        tension the bead sticks at exactly zero &mdash; soft-thresholding, mechanically.
       </li>
     </ul>
 
