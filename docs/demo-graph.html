@@ -30,32 +30,42 @@
     <h1>Conditioning a Gaussian graph</h1>
     <p class="subtitle">Pin a node, and a Schur complement ripples through the network.</p>
 
+    <p class="lead">
+      <strong>The point:</strong> fixing a variable in a multivariate Gaussian at a known value
+      and asking what the others&apos; new mean is &mdash; <em>conditioning</em> &mdash; is
+      exactly the same operation as taking a <strong>Schur complement</strong> of the precision
+      matrix. Below, that operation is a spring network: pin a bead at a value, let go, and
+      wherever the rest of the network comes to rest <em>is</em> the conditional mean. No
+      matrix algebra is running &mdash; the springs are doing the elimination.
+    </p>
+
     <p>
       Six beads on frictionless vertical rods, joined by springs along a chain &mdash; plus one
-      <strong>shortcut edge</strong> from node 1 to node 4. This is a Gaussian graphical model:
-      the precision matrix is the graph Laplacian of spring stiffnesses (a whisper of ground
-      stiffness $\varepsilon$ keeps every node weakly anchored, so the system is well-posed even
-      with nothing pinned). <strong>Click a node to pin it</strong> at its current value
-      &mdash; that is <em>conditioning</em>: eliminating a variable from a Gaussian is exactly
-      taking the Schur complement of its row and column from the precision matrix, and the
-      remaining beads relax into the exact conditional mean.
+      <strong>shortcut edge</strong> from node 1 to node 4. Both ends (0 and 5) start pinned
+      (red), so the four beads in between are already showing you a real conditional mean, not
+      an arbitrary resting point. <strong>Drag any bead</strong> and it pins wherever you drop
+      it &mdash; that is you asserting a new conditioning value. <strong>Tap a bead</strong>
+      without dragging to unpin it (or pin it in place); <strong>Unpin all</strong> releases
+      every constraint, and the whole network relaxes toward the faint dashed
+      &ldquo;flat prior&rdquo; line &mdash; a very weak default belief every node has, needed
+      only so the system has a well-defined rest state when nothing else is fixed.
     </p>
     <p>
-      Pin node 0, then node 5, and watch node 2 in the middle: it moves for both, not just its
-      immediate neighbours &mdash; correlation propagates along every path, attenuated by
-      distance and by the shortcut. Now pin node 1 <em>and</em> drag it: node 4 twitches
-      immediately, skipping straight past nodes 2 and 3 &mdash; conditioning on a graph is not
-      local the way the <a href="./index.html">chain smoother</a> was. <strong>Drag any
-      unpinned node</strong> to nudge it and watch the network restore its shape.
+      With both ends still pinned, watch node 2 in the middle as you drag node 0: it moves
+      &mdash; correlation propagates along every path, attenuated by distance and by the
+      shortcut. Now pin node 1 and drag it: node 4 twitches immediately, skipping straight past
+      nodes 2 and 3 &mdash; conditioning on a graph is not local the way the
+      <a href="./index.html">chain smoother</a> was, where influence only ever passed to an
+      immediate neighbour.
     </p>
     <p>
       Switch to the <strong>star</strong> topology and the same mechanics tell a
       <strong>collaborative</strong> story: node 0 is a shared hub, and nodes 1&ndash;5 are five
-      independent observers, each with their own spring of stiffness $\phi_i$ to the hub. Pin
-      several spokes at once, to different values, and the hub settles at their
+      independent observers, each with their own spring of stiffness $\phi_i$ to the hub. Two
+      spokes start pinned at different values, and the hub already sits at their
       precision-weighted average &mdash; the <a href="./demo-fusion.html">fusion demo</a>,
-      generalised to five voices instead of two. Unpin one spoke mid-way through and watch the
-      consensus shift as that vote is withdrawn.
+      generalised to five voices instead of two. Pin a third spoke, or unpin one mid-way
+      through, and watch the consensus shift as that vote is added or withdrawn.
     </p>
 
     <div class="demo-panel">
@@ -115,7 +125,7 @@
   const out = { kchainv: document.getElementById('kchainv'), kshortv: document.getElementById('kshortv'), rpins: document.getElementById('rpins') };
   const kchain = () => parseFloat(ui.kchain.value);
   const kshort = () => parseFloat(ui.kshort.value);
-  const EPS = 0.05;
+  const EPS = 0.05, GROUND = (YMIN + YMAX) / 2;
 
   let topology = 'chain';
   function edges() {
@@ -135,8 +145,13 @@
 
   function setTopology(t) {
     topology = t;
-    pinned = {};
-    z = t === 'star' ? [5, 3, 8, 4.5, 7, 2] : [4, 5.5, 6, 6.5, 5, 6];
+    if (t === 'star') {
+      z = [5, 3, 8, 4.5, 7, 2];
+      pinned = { 1: 3, 4: 7 };   // two observers pinned at different values, so the hub visibly fuses them
+    } else {
+      z = [4, 5.5, 6, 6.5, 5, 6];
+      pinned = { 0: 2, 5: 8 };   // both ends pinned, so the middle shows a real conditional mean
+    }
     v = z.map(() => 0);
     document.getElementById('k1lab').textContent = t === 'star' ? 'hub stiffness (spokes 1–3)' : 'chain stiffness';
     document.getElementById('k2lab').textContent = t === 'star' ? 'hub stiffness (spokes 4–5)' : 'shortcut stiffness';
@@ -148,7 +163,7 @@
   function step() {
     const E = edges(), F = Array(N).fill(0), K = Array(N).fill(EPS);
     for (const [i, j, k] of E) { F[i] += k * (z[j] - z[i]); F[j] += k * (z[i] - z[j]); K[i] += k; K[j] += k; }
-    for (let i = 0; i < N; i++) F[i] -= EPS * z[i];
+    for (let i = 0; i < N; i++) F[i] += EPS * (GROUND - z[i]);
     for (let i = 0; i < N; i++) {
       if (i in pinned) { z[i] = pinned[i]; v[i] = 0; continue; }
       v[i] += (OMEGA * OMEGA * (F[i] / K[i]) - 2 * ZETA * OMEGA * v[i]) * DT;
@@ -161,6 +176,12 @@
     // rods
     ctx.strokeStyle = '#ececec'; ctx.lineWidth = 1;
     for (let i = 0; i < N; i++) { ctx.beginPath(); ctx.moveTo(nx(i), 26); ctx.lineTo(nx(i), H - 30); ctx.stroke(); }
+    // the flat prior every free node is weakly anchored to
+    ctx.setLineDash([3, 5]); ctx.strokeStyle = '#e3e3e3'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(nx(0) - 20, py(GROUND)); ctx.lineTo(nx(N - 1) + 20, py(GROUND)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c4c4c4'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('flat prior (ε) — where fully-unpinned nodes settle', nx(N - 1) - 190, py(GROUND) - 6);
 
     // edges
     for (const [i, j, k] of edges()) {
@@ -217,7 +238,7 @@
       moved = true;
       const val = Math.min(YMAX - 0.2, Math.max(YMIN + 0.2, wy(my)));
       z[drag] = val; v[drag] = 0;
-      if (drag in pinned) pinned[drag] = val;
+      pinned[drag] = val;   // dragging pins wherever you drop it — no fighting the physics
     } else cv.style.cursor = hit(mx, my) !== null ? 'grab' : 'default';
   });
   cv.addEventListener('pointerup', () => {
