@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; PCA Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>PCA as a rod on sliding collars</h1>
+    <p class="subtitle">Total least squares is the same rod as regression &mdash; with different spring attachments.</p>
+
+    <p>
+      In the <a href="./demo-least-squares.html">least squares demo</a> each spring is pinned to
+      the rod directly above its data point, so it stretches <em>vertically</em> and the rod
+      relaxes to the regression line. Attach each spring instead through a
+      <strong>frictionless collar</strong> that slides freely along the rod, and the spring
+      swings perpendicular, storing energy $\tfrac12\sum_i d_i^2$ in the squared
+      <em>orthogonal</em> distances. The resting configuration &mdash; centre at the centroid,
+      axis along the direction of maximal variance &mdash; is the <strong>first principal
+      component</strong>, exactly Pearson&apos;s 1901 &ldquo;line of closest fit.&rdquo;
+    </p>
+    <p>
+      The rod&apos;s torque balance is pendulum-like with period $\pi$: there are two
+      equilibria. The first principal component is the stable one; the second is a
+      <strong>balance point</strong> &mdash; try the button that stands the rod on PC2 and watch
+      it teeter before swinging down to PC1, slowly when the cloud is nearly round (weak
+      restoring torque, eigenvalues nearly tied) and violently when it is elongated. Principal
+      components are the normal modes of the point cloud; eigenvalues are their stiffnesses.
+      <strong>Drag points</strong>, reshape the cloud with the sliders, or spin the rod.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="460"></canvas>
+      <div class="controls">
+        <label><span class="lab">cloud tilt</span>
+          <input type="range" id="tilt" min="-90" max="90" step="1" value="27"><span class="val" id="tiltv"></span></label>
+        <label><span class="lab">cloud flatness</span>
+          <input type="range" id="flat" min="0.08" max="1" step="0.01" value="0.35"><span class="val" id="flatv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(150px, max-content));">
+        <button id="spin">Spin the rod</button>
+        <button id="pc2">Balance on PC2</button>
+        <button id="regen">New data</button>
+      </div>
+      <div class="readout">
+        <span>rod angle <b id="rth"></b>&deg;</span>
+        <span>PC1 angle <b id="rpc"></b>&deg;</span>
+        <span>energy <b id="ren"></b></span>
+        <span>eigenvalues <b id="rl1"></b> / <b id="rl2"></b></span>
+      </div>
+    </div>
+
+    <p>
+      Vertical springs give regression; sliding collars give PCA; and a spring with anisotropic
+      stiffness would interpolate the two (errors-in-variables). The energy here is the
+      negative log-likelihood of an isotropic Gaussian around the line, which is why the collar
+      construction finds the top eigenvector of the covariance &mdash; and why, for a nearly
+      round cloud, the axis is barely identified: the bowl is nearly flat in $\theta$ and the
+      rod wanders. See Pearson (1901) in the <a href="./index.html#reading">reading list</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 460;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a';
+  const XMIN = 0, XMAX = 10, YMIN = 0, YMAX = 6;
+  const px = x => 30 + (x - XMIN) / (XMAX - XMIN) * (W - 60);
+  const py = y => H - 30 - (y - YMIN) / (YMAX - YMIN) * (H - 60);
+  const wx = p => XMIN + (p - 30) / (W - 60) * (XMAX - XMIN);
+  const wy = p => YMIN + (H - 30 - p) / (H - 60) * (YMAX - YMIN);
+
+  const ui = { tilt: document.getElementById('tilt'), flat: document.getElementById('flat') };
+  const out = {};
+  ['tiltv', 'flatv', 'rth', 'rpc', 'ren', 'rl1', 'rl2'].forEach(id => out[id] = document.getElementById(id));
+
+  const N = 28, CX = 5, CY = 3, S1 = 1.9;
+  function randn() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  // fixed standard-normal pairs; sliders reshape the same cloud smoothly
+  let seeds = [], override = {};
+  function regen() {
+    seeds = Array.from({ length: N }, () => [randn(), randn()]);
+    override = {};
+  }
+  regen();
+
+  function points() {
+    const al = parseFloat(ui.tilt.value) * Math.PI / 180;
+    const s2 = S1 * parseFloat(ui.flat.value);
+    const ca = Math.cos(al), sa = Math.sin(al);
+    return seeds.map(([z1, z2], i) => {
+      if (i in override) return override[i];
+      const u = S1 * 0.55 * z1, v = s2 * 0.55 * z2;
+      return [
+        Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, CX + ca * u - sa * v)),
+        Math.min(YMAX - 0.2, Math.max(YMIN + 0.2, CY + sa * u + ca * v)),
+      ];
+    });
+  }
+
+  function pca(pts) {
+    const n = pts.length;
+    let mx = 0, my = 0;
+    for (const [x, y] of pts) { mx += x; my += y; }
+    mx /= n; my /= n;
+    let sxx = 0, syy = 0, sxy = 0;
+    for (const [x, y] of pts) {
+      sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my);
+    }
+    sxx /= n; syy /= n; sxy /= n;
+    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    const half = Math.sqrt(((sxx - syy) / 2) ** 2 + sxy ** 2);
+    return { mx, my, th, l1: (sxx + syy) / 2 + half, l2: (sxx + syy) / 2 - half };
+  }
+
+  // rod state: centre (cx, cy), angle th
+  let rod = { cx: CX, cy: CY, th: 0.9, vx: 0, vy: 0, vth: 0 };
+
+  const DT = 1 / 60, ZETA = 0.15, OMEGA = 4;
+  function step(pts) {
+    const n = pts.length;
+    const uxx = Math.cos(rod.th), uyy = Math.sin(rod.th);
+    const nx = -uyy, ny = uxx;
+    let Fx = 0, Fy = 0, T = 0, I = 1e-6;
+    for (const [x, y] of pts) {
+      const rx = x - rod.cx, ry = y - rod.cy;
+      const d = rx * nx + ry * ny;         // perpendicular offset
+      const s = rx * uxx + ry * uyy;       // collar position along the rod
+      Fx += d * nx; Fy += d * ny;          // spring pulls the rod sideways
+      T += d * s;                          // and torques it about its centre
+      I += rx * rx + ry * ry;
+    }
+    rod.vx += (OMEGA * OMEGA * (Fx / n) - 2 * ZETA * OMEGA * rod.vx) * DT;
+    rod.vy += (OMEGA * OMEGA * (Fy / n) - 2 * ZETA * OMEGA * rod.vy) * DT;
+    rod.vth += (OMEGA * OMEGA * (T / I) - 2 * ZETA * OMEGA * rod.vth) * DT;
+    rod.cx += rod.vx * DT; rod.cy += rod.vy * DT; rod.th += rod.vth * DT;
+  }
+
+  function energy(pts) {
+    const nx = -Math.sin(rod.th), ny = Math.cos(rod.th);
+    let E = 0;
+    for (const [x, y] of pts) E += 0.5 * ((x - rod.cx) * nx + (y - rod.cy) * ny) ** 2;
+    return E;
+  }
+
+  function zigzag(x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+    if (L < 8) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); return; }
+    const n = Math.max(2, Math.round(L / 11) + 1), amp = 3.5;
+    const ux = dx / L, uy = dy / L, nx2 = -uy, ny2 = ux;
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    for (let i = 0; i < n * 2; i++) {
+      const f = (i + 1) / (n * 2 + 1), sgn = i % 2 ? amp : -amp;
+      ctx.lineTo(x1 + dx * f + nx2 * sgn, y1 + dy * f + ny2 * sgn);
+    }
+    ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  function drawAxis(mx, my, th, color, dash, len) {
+    ctx.setLineDash(dash); ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    const ux = Math.cos(th), uy = Math.sin(th);
+    ctx.beginPath();
+    ctx.moveTo(px(mx - ux * len), py(my - uy * len));
+    ctx.lineTo(px(mx + ux * len), py(my + uy * len));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function draw(pts, p) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = '#e2e2e2'; ctx.lineWidth = 1;
+    ctx.strokeRect(30, 24, W - 60, H - 54);
+
+    // closed-form axes
+    drawAxis(p.mx, p.my, p.th, '#c9c7e6', [6, 5], 4.6);
+    drawAxis(p.mx, p.my, p.th + Math.PI / 2, '#e4e3f3', [3, 5], 1.6);
+    ctx.fillStyle = '#8a88b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('dashed: PC1 and PC2 (closed form)', 36, 40);
+
+    const ux = Math.cos(rod.th), uy = Math.sin(rod.th);
+    const nx = -uy, ny = ux;
+
+    // springs and collars
+    ctx.strokeStyle = '#c4c4c4'; ctx.lineWidth = 1.4; ctx.lineJoin = 'round';
+    for (const [x, y] of pts) {
+      const rx = x - rod.cx, ry = y - rod.cy;
+      const s = rx * ux + ry * uy;
+      const colx = rod.cx + s * ux, coly = rod.cy + s * uy;
+      zigzag(px(x), py(y), px(colx), py(coly));
+    }
+
+    // rod
+    const LEN = 4.6;
+    ctx.strokeStyle = ACC; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(px(rod.cx - ux * LEN), py(rod.cy - uy * LEN));
+    ctx.lineTo(px(rod.cx + ux * LEN), py(rod.cy + uy * LEN));
+    ctx.stroke();
+
+    // collars on top of the rod
+    for (const [x, y] of pts) {
+      const s = (x - rod.cx) * ux + (y - rod.cy) * uy;
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#7fbfa6'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(px(rod.cx + s * ux), py(rod.cy + s * uy), 3.4, 0, 7);
+      ctx.fill(); ctx.stroke();
+    }
+
+    // points
+    for (const [x, y] of pts) {
+      ctx.fillStyle = INK;
+      ctx.beginPath(); ctx.arc(px(x), py(y), 5, 0, 7); ctx.fill();
+    }
+
+    // rod pivot
+    ctx.fillStyle = ACC;
+    ctx.beginPath(); ctx.arc(px(rod.cx), py(rod.cy), 4, 0, 7); ctx.fill();
+
+    const deg = th => ((th * 180 / Math.PI) % 180 + 180) % 180;
+    out.tiltv.textContent = ui.tilt.value + '°';
+    out.flatv.textContent = parseFloat(ui.flat.value).toFixed(2);
+    out.rth.textContent = deg(rod.th).toFixed(1);
+    out.rpc.textContent = deg(p.th).toFixed(1);
+    out.ren.textContent = energy(pts).toFixed(3);
+    out.rl1.textContent = p.l1.toFixed(2);
+    out.rl2.textContent = p.l2.toFixed(2);
+  }
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my, pts) {
+    for (let i = 0; i < pts.length; i++)
+      if (Math.hypot(mx - px(pts[i][0]), my - py(pts[i][1])) < 11) return i;
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = hit(...evPos(e), points());
+    if (drag !== null) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag !== null) {
+      override[drag] = [
+        Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx))),
+        Math.min(YMAX - 0.2, Math.max(YMIN + 0.2, wy(my))),
+      ];
+    } else cv.style.cursor = hit(mx, my, points()) !== null ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('spin').addEventListener('click', () => { rod.vth += 5; });
+  document.getElementById('pc2').addEventListener('click', () => {
+    const p = pca(points());
+    rod.cx = p.mx; rod.cy = p.my; rod.th = p.th + Math.PI / 2;
+    rod.vx = rod.vy = 0; rod.vth = 0.001;   // a whisper of a nudge
+  });
+  document.getElementById('regen').addEventListener('click', regen);
+
+  (function loop() {
+    const pts = points();
+    step(pts); step(pts);
+    draw(pts, pca(pts));
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

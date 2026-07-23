@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Least Squares as Springs</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Least squares as springs</h1>
+    <p class="subtitle">Regression is a rigid rod that stopped arguing with the data.</p>
+
+    <p>
+      Each data point is tied to a rigid rod by a spring of natural length zero and unit
+      stiffness, running in a frictionless vertical guide so it can only stretch up and down.
+      The stored energy is then exactly $\tfrac12\sum_i r_i^2$ &mdash; half the residual sum of
+      squares. Release the rod and it relaxes until the spring forces and torques balance, which
+      is exactly the normal equations: the resting position is the ordinary least squares line
+      (dashed, computed in closed form). <strong>Drag the points</strong> and the rod chases the
+      new fit; <strong>pluck</strong> it to see it oscillate back. The idea follows
+      <a href="https://joshualoftus.com/posts/2020-11-23-least-squares-as-springs/least-squares-as-springs.html">Joshua
+      Loftus&apos;s &ldquo;Least Squares as Springs&rdquo;</a>; for drawing springs properly, see
+      Hadley Wickham&apos;s <a href="https://ggplot2-book.org/spring1.html">spring geom case
+      study</a> in the ggplot2 book.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="460"></canvas>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="pluck">Pluck</button>
+        <button id="reset">Reset points</button>
+      </div>
+      <div class="readout">
+        <span>energy (&frac12; RSS) <b id="re"></b></span>
+        <span>rod slope <b id="rb"></b></span>
+        <span>OLS slope <b id="ob"></b></span>
+        <span class="muted">weighting a point = a stiffer spring = higher precision</span>
+      </div>
+    </div>
+
+    <p>
+      In the <a href="./dictionary.html">dictionary</a>: stiffness is precision, so weighted
+      least squares is nothing but unequal springs, and adding a ridge penalty is one more spring
+      tying the rod to the prior. Generalise from a rod to a network of beads and you are back at
+      the <a href="./demo-fusion.html">fusion demo</a> and the Kalman filter.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 460;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const ACC = '#0b7a55', INK = '#12312a', FAINT = '#9a9a9a';
+  const PAD = 40, XMIN = 0, XMAX = 10, YMIN = 0, YMAX = 10;
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const py = y => H - PAD - (y - YMIN) / (YMAX - YMIN) * (H - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+  const wy = p => YMIN + (H - PAD - p) / (H - 2 * PAD) * (YMAX - YMIN);
+
+  const initialPts = () => [
+    { x: 0.8, y: 2.6 }, { x: 2.0, y: 2.2 }, { x: 3.1, y: 4.3 }, { x: 4.2, y: 3.6 },
+    { x: 5.5, y: 5.9 }, { x: 6.7, y: 5.2 }, { x: 7.8, y: 7.4 }, { x: 9.1, y: 6.9 },
+  ];
+  let pts = initialPts();
+
+  // rod state: height a at the fixed pivot XC, slope b
+  const XC = 5;
+  let a = 8, b = -0.5, va = 0, vb = 0;
+
+  function ols() {
+    const n = pts.length;
+    const xm = pts.reduce((s, p) => s + p.x, 0) / n;
+    const ym = pts.reduce((s, p) => s + p.y, 0) / n;
+    let sxx = 0, sxy = 0;
+    for (const p of pts) { sxx += (p.x - xm) ** 2; sxy += (p.x - xm) * (p.y - ym); }
+    const bo = sxy / (sxx + 1e-12);
+    return { b: bo, a: ym + bo * (XC - xm) };   // height at the pivot
+  }
+
+  const DT = 1 / 60, ZETA = 0.1, OMEGA = 4;
+  function step() {
+    let Fa = 0, Fb = 0, Ia = pts.length, Ib = 1e-6;
+    for (const p of pts) {
+      const r = p.y - (a + b * (p.x - XC));
+      Fa += r; Fb += r * (p.x - XC); Ib += (p.x - XC) ** 2;
+    }
+    va += (OMEGA * OMEGA * Fa / Ia - 2 * ZETA * OMEGA * va) * DT;
+    vb += (OMEGA * OMEGA * Fb / Ib - 2 * ZETA * OMEGA * vb) * DT;
+    a += va * DT; b += vb * DT;
+  }
+
+  function vspring(x, y1, y2) {
+    const n = Math.max(2, Math.round(Math.abs(y2 - y1) / 16) + 2), amp = 6;
+    const dy = (y2 - y1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + dy);
+    for (let i = 0; i < n * 2; i++)
+      ctx.lineTo(x + (i % 2 ? amp : -amp), y1 + dy * (i + 1.5));
+    ctx.lineTo(x, y2 - dy); ctx.lineTo(x, y2); ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // axes frame
+    ctx.strokeStyle = '#e2e2e2'; ctx.lineWidth = 1;
+    ctx.strokeRect(PAD, PAD * 0.6, W - 2 * PAD, H - PAD * 0.6 - PAD);
+
+    const o = ols();
+    // dashed OLS target
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = FAINT; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px(XMIN), py(o.a + o.b * (XMIN - XC)));
+    ctx.lineTo(px(XMAX), py(o.a + o.b * (XMAX - XC)));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // springs
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+    for (const p of pts) vspring(px(p.x), py(p.y), py(a + b * (p.x - XC)));
+
+    // rod
+    ctx.strokeStyle = ACC; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(px(XMIN + 0.15), py(a + b * (XMIN + 0.15 - XC)));
+    ctx.lineTo(px(XMAX - 0.15), py(a + b * (XMAX - 0.15 - XC)));
+    ctx.stroke();
+
+    // points
+    for (const p of pts) {
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px(p.x), py(p.y), 7, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px(p.x), py(p.y), 2.5, 0, 7); ctx.fill();
+    }
+
+    // labels
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('dashed: closed-form OLS', W - PAD - 6, PAD * 0.6 + 16);
+
+    let E = 0;
+    for (const p of pts) E += 0.5 * (p.y - (a + b * (p.x - XC))) ** 2;
+    document.getElementById('re').textContent = E.toFixed(3);
+    document.getElementById('rb').textContent = b.toFixed(3);
+    document.getElementById('ob').textContent = o.b.toFixed(3);
+  }
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function evPos(e) {
+    const r = cv.getBoundingClientRect();
+    return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  }
+  function ptAt(mx, my) {
+    for (const p of pts) if (Math.hypot(mx - px(p.x), my - py(p.y)) < 14) return p;
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = ptAt(...evPos(e));
+    if (drag) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag) {
+      drag.x = Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx)));
+      drag.y = Math.min(YMAX - 0.2, Math.max(YMIN + 0.2, wy(my)));
+    } else cv.style.cursor = ptAt(mx, my) ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('pluck').addEventListener('click', () => { va += 6; vb -= 1.6; });
+  document.getElementById('reset').addEventListener('click', () => {
+    pts = initialPts(); a = 8; b = -0.5; va = 0; vb = 0;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

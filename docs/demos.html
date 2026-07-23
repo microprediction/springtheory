@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Demos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./index.html">&larr; Home</a></p>
+    <h1>Demos</h1>
+    <p class="subtitle">Analog inference you can drag. Plain HTML and a canvas &mdash; no build step, no libraries.</p>
+
+    <p>
+      Every demo is an <strong>exact</strong> physical analog, not an illustration: the
+      idealised mechanism&apos;s potential energy equals the negative log posterior term for
+      term, so its equilibrium <em>is</em> the estimator. Each page draws the closed-form
+      answer dashed alongside the simulation so you can watch the physics land on it.
+    </p>
+
+    <ul>
+      <li>
+        <a href="./demo-fusion.html"><strong>Evidence fusion</strong></a> &mdash; a prior and any
+        number of observations hang on a test particle; the particle relaxes to the posterior
+        mean and the total mass is the posterior precision. Add observations one at a time and
+        watch equilibrium re-form; slacken the observation channel with the &rho; dial to see the
+        reduced-mass rule at work.
+      </li>
+      <li>
+        <a href="./demo-reduced-mass.html"><strong>Reduced mass</strong></a> &mdash; a
+        hierarchical chain (observation, latent joint, particle) above its consolidated
+        equivalent: a single body carrying the reduced mass &phi;&rho;/(&phi;+&rho;). Both
+        settle on the same line; slacken the channel and watch the evidence&apos;s weight drain
+        away.
+      </li>
+      <li>
+        <a href="./demo-schur-damping.html"><strong>Schur damping</strong></a> &mdash;
+        eliminating the chain&apos;s free joint is a scalar Schur complement; the &gamma; dial
+        keeps only a fraction of the joint&apos;s recoil, sliding between clamped-to-the-data
+        overconfidence (&gamma;=0) and the exact marginal (&gamma;=1). The allocation version
+        of the same dial lives at
+        <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
+      </li>
+      <li>
+        <a href="./demo-least-squares.html"><strong>Least squares as springs</strong></a>
+        &mdash; a rigid rod tied by vertical springs to draggable data points relaxes to the
+        ordinary least squares line, after
+        <a href="https://joshualoftus.com/posts/2020-11-23-least-squares-as-springs/least-squares-as-springs.html">Loftus</a>.
+      </li>
+      <li>
+        <a href="./demo-smoother.html"><strong>The time-series smoother</strong></a> &mdash; a
+        bead chain (measurement springs down to the data, process-noise springs between
+        neighbours) relaxes to the Kalman smoother of a local-level model, alias
+        Whittaker&ndash;Henderson graduation. Add an observation and watch the whole posterior
+        path re-equilibrate.
+      </li>
+      <li>
+        <a href="./demo-roll.html"><strong>Bid-ask bounce</strong></a> &mdash; a Gaussian Roll
+        model: trades with negatively autocorrelated errors are <em>anti-redundant</em>
+        evidence. The GLS weights are precision row sums, so bouncing prices carry more mass
+        than their naive iid weight &mdash; and stale, positively correlated ones far less.
+      </li>
+      <li>
+        <a href="./demo-minvar.html"><strong>The minimum-variance portfolio</strong></a>
+        &mdash; a bead on the allocation rail, tied to the corner portfolios by springs of
+        stiffness &sigma;&sup2;&minus;c. Raise the correlation and a spring turns repulsive:
+        short selling emerges mechanically. Min-var weights are precision row sums &mdash; the
+        GLS estimator of a common mean in a finance hat.
+      </li>
+      <li>
+        <a href="./demo-pca.html"><strong>PCA as a rod on sliding collars</strong></a> &mdash;
+        attach the regression rod&apos;s springs through frictionless collars and they pull
+        perpendicular: the rod relaxes to the first principal component, and balances unstably
+        on the second. Pearson&apos;s 1901 &ldquo;line of closest fit,&rdquo; literally.
+      </li>
+    </ul>
+
+    <p class="muted">
+      Have an idea for a demo? Open an issue on
+      <a href="https://github.com/microprediction/springtheory">the repo</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+</body>
+</html>

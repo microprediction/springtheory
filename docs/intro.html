@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Introduction</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./index.html">&larr; Home</a></p>
+    <h1>The Analog Kalman Filter</h1>
+    <p class="subtitle">From Hooke&apos;s law to Bayes&apos; rule in five consolidation moves.</p>
+
+    <h2>1. A Hookean universe</h2>
+    <p>
+      Work in one dimension and imagine a slightly unusual physics: a body of mass $k$ sitting at
+      position $x$ attracts a unit test particle at position $z$ with a force that grows
+      <em>linearly</em> with separation,
+    </p>
+    <div class="equation-card">
+      $$ F(z) \;=\; k\,(x - z), \qquad U(z) \;=\; \tfrac{1}{2}\,k\,(z - x)^2 . $$
+    </div>
+    <p>
+      Whether you call $k$ a mass in linear gravity or the stiffness of a spring tying the
+      particle to an anchor at $x$ makes no difference &mdash; the algebra is Hooke&apos;s law
+      either way. Now compare the potential $U$ with a Gaussian density
+      $\mathcal{N}(x, k^{-1})$ evaluated at $z$:
+    </p>
+    <div class="equation-card">
+      $$ -\log p(z) \;=\; \tfrac{1}{2}\,k\,(z - x)^2 + \text{const}. $$
+    </div>
+    <p>
+      The two are identical up to a constant. So in this universe:
+      <strong>energy is negative log-likelihood</strong>,
+      <strong>mass is precision</strong> (inverse variance), and
+      <strong>force is the score</strong> $\tfrac{d}{dz}\log p(z)$. Minimising energy is
+      maximising likelihood, and a particle released to find equilibrium is performing maximum a
+      posteriori estimation by analog computation. (The full
+      <a href="./dictionary.html">dictionary</a> has more entries.)
+    </p>
+
+    <h2>2. Fusion: the centre of mass is Bayes&apos; rule</h2>
+    <p>
+      Attach the test particle to two bodies: a prior belief of mass $P^{-1}$ anchored at $m$,
+      and an observation of mass $R^{-1}$ anchored at $y$. The net force vanishes where the
+      pulls balance:
+    </p>
+    <div class="equation-card">
+      $$ P^{-1}(m - z) + R^{-1}(y - z) = 0
+         \;\;\Longrightarrow\;\;
+         z^\ast \;=\; \frac{P^{-1}m + R^{-1}y}{P^{-1} + R^{-1}} . $$
+    </div>
+    <p>
+      That is the <strong>centre of mass</strong> of the two bodies &mdash; and it is also,
+      exactly, the Kalman measurement update. In gain form, with $K = P/(P+R)$, the same point is
+      $z^\ast = m + K(y - m)$. The posterior precision is the total mass,
+      $(P')^{-1} = P^{-1} + R^{-1}$: <em>masses attached in parallel add</em>, which is the
+      mechanical face of the rule that independent precisions add.
+    </p>
+    <p>
+      This licenses the first <em>consolidation move</em>: as far as the test particle is
+      concerned, the two bodies may be replaced by a single body of mass $P^{-1}+R^{-1}$ sitting
+      at $z^\ast$. No experiment performed by the particle can tell the difference. Consolidation
+      is what makes the analogy computational rather than decorative &mdash; it is the mechanical
+      form of &ldquo;the posterior is again Gaussian.&rdquo;
+      <a href="./demo-fusion.html">Watch it settle in the demo.</a>
+    </p>
+
+    <h2>3. Chains: series springs are the reduced mass</h2>
+    <p>
+      Now make the model hierarchical, as in
+      <a href="https://medium.com/geekculture/the-analog-kalman-filter-e1f5bbba2f7f">the
+      article</a>. The unknown location $\mu$ has a Gaussian prior; an intermediate quantity
+      $x_2$ scatters around $\mu$; and the measurement $y$ is a noisy reading of $x_2$:
+    </p>
+    <div class="equation-card">
+      $$ \mu \sim \mathcal{N}(m, P), \qquad
+         x_2 \mid \mu \sim \mathcal{N}(\mu, \rho^{-1}), \qquad
+         y \mid x_2 \sim \mathcal{N}(x_2, \phi^{-1}). $$
+    </div>
+    <p>
+      Mechanically, the body at $y$ no longer connects to the test particle directly: its spring
+      of stiffness $\phi$ ends at a free intermediate joint, and a second spring of stiffness
+      $\rho$ continues to the particle. Two springs <strong>in series</strong> have effective
+      stiffness
+    </p>
+    <div class="equation-card">
+      $$ \tilde{\phi} \;=\; \left( \frac{1}{\phi} + \frac{1}{\rho} \right)^{-1}
+         \;=\; \frac{\phi\,\rho}{\phi + \rho}, $$
+    </div>
+    <p>
+      which the physicists among us recognise as the <strong>reduced mass</strong> formula
+      $\mu_{12} = m_1 m_2 / (m_1 + m_2)$. Statistically it is nothing but
+      &ldquo;variances add along a chain&rdquo;: marginally
+      $y \mid \mu \sim \mathcal{N}(\mu,\, \phi^{-1} + \rho^{-1})$. The second consolidation move
+      follows: replace the chain by a single body of mass $\tilde{\phi}$ at $y$
+      (<a href="./demo-reduced-mass.html">watch the chain and its consolidation settle on the
+      same line</a>), then apply the centre-of-mass rule from step 2:
+    </p>
+    <div class="equation-card">
+      $$ m' \;=\; \frac{P^{-1}m + \tilde{\phi}\,y}{P^{-1} + \tilde{\phi}}, \qquad
+         (P')^{-1} \;=\; P^{-1} + \tilde{\phi}. $$
+    </div>
+
+    <h2>4. The Kalman filter as a limit</h2>
+    <p>
+      Stiffen the intermediate link. As $\rho \to \infty$ the joint is pinned &mdash; $x_2$
+      coincides with $\mu$ &mdash; and the reduced mass tends to $\tilde{\phi} \to \phi$,
+      recovering the standard update of step 2. The textbook Kalman measurement step is the
+      rigid-rod limit of a hierarchical model; keeping $\rho$ finite <em>is</em> the hierarchical
+      model, at the price of one harmonic mean. The
+      <a href="./demo-fusion.html">fusion demo</a> has a $\rho$ dial so you can feel the
+      observation&apos;s effective mass drain away as the channel gets sloppier.
+    </p>
+
+    <h2>5. The whole filter: alternate parallel and series</h2>
+    <p>
+      A full filtering cycle needs one more ingredient: time. Between observations the state
+      diffuses with process noise of variance $Q$, so the predictive variance is $P' + Q$
+      &mdash; which in mass terms is another <em>series</em> composition, this time with the
+      process-noise body of mass $q = Q^{-1}$:
+    </p>
+    <div class="equation-card">
+      $$ p_{\text{pred}} \;=\; \frac{p'\,q}{p' + q} \;<\; p'. $$
+    </div>
+    <p>
+      So the scalar Kalman filter is an alternation of the two composition rules:
+      <strong>measurement updates add mass in parallel</strong> (evidence accretes),
+      <strong>time updates bleed mass through a series spring</strong> (staleness erodes). The
+      state estimate is a body whose weight waxes with every observation and wanes with every
+      tick of the clock.
+    </p>
+
+    <h2>6. Beyond one dimension</h2>
+    <p>
+      Nothing above is really scalar. In $n$ dimensions mass becomes a precision
+      <em>matrix</em>, springs pull along vectors, and the centre-of-mass and series rules become
+      $\Sigma$-weighted averages and matrix harmonic means. Conditioning a multivariate Gaussian
+      on some of its coordinates &mdash; pinning part of the spring network to the wall and
+      asking what the rest feels &mdash; produces a <strong>Schur complement</strong> of the
+      precision matrix. That thread is pulled at the sister site,
+      <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
+    </p>
+
+    <h2>Caveats</h2>
+    <p>
+      The correspondence is exact precisely when energies are quadratic, i.e. when everything is
+      Gaussian and linear. Non-Gaussian likelihoods are non-Hookean springs: the picture of
+      forces balancing at a mode survives (that is just MAP estimation as equilibrium), but the
+      consolidation moves &mdash; the licence to replace a subsystem by one equivalent body
+      &mdash; do not. That failure is instructive too: it is the mechanical face of
+      non-conjugacy.
+    </p>
+
+    <div class="next-steps">
+      <p><strong>Next:</strong> the <a href="./dictionary.html">dictionary</a> collects the
+      correspondences in one table, and the <a href="./demos.html">demos</a> let you drag the
+      masses yourself.</p>
+    </div>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+</body>
+</html>

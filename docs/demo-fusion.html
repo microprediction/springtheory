@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Evidence Fusion Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Evidence fusion</h1>
+    <p class="subtitle">The posterior mean is where the pulling stops.</p>
+
+    <p>
+      The dark body is the <strong>prior</strong>; green bodies are <strong>observations</strong>.
+      Each is a mass equal to its precision, tied by a spring to the white test particle, which
+      relaxes to the centre of mass &mdash; the posterior mean. The bowl above is the potential
+      energy, i.e. the negative log posterior; the particle is a ball rolling to its bottom.
+      <strong>Drag any body</strong>, or <strong>add an observation</strong> and watch
+      equilibrium re-form. The $\rho$ dial threads every observation through a noisy channel of
+      that precision, replacing its mass $\phi$ by the reduced mass
+      $\phi\rho/(\phi+\rho)$; at the far right the channel is rigid ($\rho=\infty$) and the
+      update is the vanilla Kalman step.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="430"></canvas>
+      <div class="controls">
+        <label><span class="lab">prior position $m$</span>
+          <input type="range" id="pm" min="0.5" max="9.5" step="0.05" value="3"><span class="val" id="pmv"></span></label>
+        <label><span class="lab">prior mass $P^{-1}$</span>
+          <input type="range" id="pk" min="0.2" max="8" step="0.05" value="2"><span class="val" id="pkv"></span></label>
+        <label><span class="lab">channel $\rho$</span>
+          <input type="range" id="rho" min="0.2" max="8.2" step="0.05" value="8.2"><span class="val" id="rhov"></span></label>
+        <label><span class="lab">new obs. mass $\phi$</span>
+          <input type="range" id="ok" min="0.2" max="8" step="0.05" value="1.5"><span class="val" id="okv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(140px, max-content));">
+        <button id="add">Add observation</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>posterior mean <b id="rmean"></b></span>
+        <span>posterior precision (total mass) <b id="rprec"></b></span>
+        <span>particle at <b id="rz"></b></span>
+        <span id="rrho"></span>
+      </div>
+    </div>
+
+    <p>
+      Everything on screen is computed twice: the readout uses the closed-form update
+      $m' = \big(P^{-1}m + \sum_i \tilde\phi_i y_i\big)\big/\big(P^{-1} + \sum_i \tilde\phi_i\big)$,
+      while the particle just integrates $F = ma$ with damping. That they agree is the point.
+      Derivation in the <a href="./intro.html">introduction</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 430;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', SOFT = '#e6f4ed';
+  const XMIN = 0, XMAX = 10, PAD = 42;
+  const RAIL_Y = 330, BOWL_TOP = 18, BOWL_BOT = 180, BOWL_H = BOWL_BOT - BOWL_TOP;
+  const RHO_INF = 8.2;   // slider max means "rigid channel"
+
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = {};
+  ['pm', 'pk', 'rho', 'ok'].forEach(id => ui[id] = document.getElementById(id));
+  const out = {};
+  ['pmv', 'pkv', 'rhov', 'okv', 'rmean', 'rprec', 'rz', 'rrho'].forEach(id => out[id] = document.getElementById(id));
+
+  const initialObs = () => [{ x: 7, k: 1.5 }];
+  let obs = initialObs();
+  let z = 3, v = 0;                       // test particle state
+  const nextX = [8.6, 1.6, 5.6, 9.3, 0.9, 4.4, 6.9, 2.4];  // where new observations land
+  let nextI = 0;
+
+  const rho = () => parseFloat(ui.rho.value) >= RHO_INF ? Infinity : parseFloat(ui.rho.value);
+  const eff = k => { const r = rho(); return isFinite(r) ? k * r / (k + r) : k; };
+  const priorM = () => parseFloat(ui.pm.value);
+  const priorK = () => parseFloat(ui.pk.value);
+
+  function posterior() {
+    let num = priorK() * priorM(), den = priorK();
+    for (const o of obs) { const ke = eff(o.k); num += ke * o.x; den += ke; }
+    return { mean: num / den, prec: den };
+  }
+
+  // --- physics -------------------------------------------------------------
+  // inertia scaled to the total mass so the natural frequency is OMEGA at any precision
+  const DT = 1 / 60, ZETA = 0.22, OMEGA = 4;
+  function step() {
+    const K = posterior().prec;
+    let F = priorK() * (priorM() - z);
+    for (const o of obs) F += eff(o.k) * (o.x - z);
+    const a = OMEGA * OMEGA * (F / K) - 2 * ZETA * OMEGA * v;
+    v += a * DT; z += v * DT;
+  }
+
+  // --- drawing -------------------------------------------------------------
+  function spring(x1, x2, y, coils) {
+    const n = Math.max(3, coils), dx = (x2 - x1) / (n * 2 + 2), amp = 11;
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + dx, y);
+    for (let i = 0; i < n * 2; i++)
+      ctx.lineTo(x1 + dx * (i + 1.5), y + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, y); ctx.lineTo(x2, y); ctx.stroke();
+  }
+
+  function energy(zz) {
+    let u = 0.5 * priorK() * (zz - priorM()) ** 2;
+    for (const o of obs) u += 0.5 * eff(o.k) * (zz - o.x) ** 2;
+    return u;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const post = posterior();
+
+    // energy bowl, normalised so its minimum touches the bottom of the band
+    const umin = energy(post.mean);
+    let umax = umin;
+    for (let x = XMIN; x <= XMAX; x += 0.1) umax = Math.max(umax, energy(x));
+    const uy = u => BOWL_BOT - 12 - (BOWL_H - 24) * (1 - (u - umin) / (umax - umin + 1e-9));
+    ctx.strokeStyle = '#c9c7e6'; ctx.lineWidth = 2; ctx.beginPath();
+    for (let x = XMIN; x <= XMAX; x += 0.05) {
+      const p = px(x), q = uy(energy(x));
+      x === XMIN ? ctx.moveTo(p, q) : ctx.lineTo(p, q);
+    }
+    ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('potential energy  =  negative log posterior', PAD, BOWL_TOP - 2);
+    // ball rolling in the bowl at the particle's position
+    ctx.fillStyle = ACC; ctx.beginPath();
+    ctx.arc(px(Math.min(XMAX, Math.max(XMIN, z))), uy(energy(z)) - 5, 5, 0, 7); ctx.fill();
+
+    // rail
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(PAD - 14, RAIL_Y, W - 2 * PAD + 28, 6, 3); ctx.fill();
+
+    // posterior marker (closed form) — ghost body of the consolidated mass
+    const gr = 8 + 7 * Math.sqrt(post.prec);
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = FAINT; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(px(post.mean), RAIL_Y + 3 - gr, gr, 0, 7); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(px(post.mean), RAIL_Y - 2); ctx.lineTo(px(post.mean), RAIL_Y + 16);
+    ctx.strokeStyle = FAINT; ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.textAlign = 'center'; ctx.font = '11px sans-serif';
+    ctx.fillText('equivalent body (closed form)', px(post.mean), RAIL_Y + 30);
+
+    // springs from each body to the particle
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    const bodies = [{ x: priorM(), k: priorK(), ke: priorK(), prior: true }]
+      .concat(obs.map(o => ({ x: o.x, k: o.k, ke: eff(o.k), prior: false })));
+    for (const b of bodies) {
+      const r = radius(b.ke), zpx = px(z), bx = px(b.x);
+      const y = RAIL_Y - 12;
+      const [x1, x2] = bx < zpx ? [bx + r * 0.6, zpx - 8] : [zpx + 8, bx - r * 0.6];
+      if (x2 - x1 > 14) spring(x1, x2, y, Math.round((x2 - x1) / 34) + 2);
+    }
+
+    // bodies
+    ctx.font = '600 12px sans-serif';
+    bodies.forEach((b, i) => {
+      const r = radius(b.ke);
+      ctx.fillStyle = b.prior ? INK : ACC;
+      ctx.beginPath(); ctx.arc(px(b.x), RAIL_Y + 3 - r, r, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+      if (r > 12) ctx.fillText(b.ke.toFixed(1), px(b.x), RAIL_Y + 7 - r);
+      ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif';
+      ctx.fillText(b.prior ? 'prior' : 'y' + i, px(b.x), RAIL_Y + 46);
+      ctx.font = '600 12px sans-serif';
+    });
+
+    // test particle
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), RAIL_Y - 12, 8, 0, 7); ctx.fill(); ctx.stroke();
+
+    // readouts
+    out.pmv.textContent = priorM().toFixed(2);
+    out.pkv.textContent = priorK().toFixed(2);
+    out.rhov.textContent = isFinite(rho()) ? rho().toFixed(2) : '∞';
+    out.okv.textContent = parseFloat(ui.ok.value).toFixed(2);
+    out.rmean.textContent = post.mean.toFixed(3);
+    out.rprec.textContent = post.prec.toFixed(3);
+    out.rz.textContent = z.toFixed(3);
+    out.rrho.innerHTML = isFinite(rho())
+      ? 'each observation mass φ acts as φρ/(φ+ρ)'
+      : 'rigid channel: the vanilla Kalman update';
+  }
+
+  const radius = ke => 8 + 7 * Math.sqrt(ke);
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function bodyAt(mx, my) {
+    const cand = [{ get: () => priorM(), set: x => { ui.pm.value = x; }, ke: priorK(), obs: null }]
+      .concat(obs.map(o => ({ get: () => o.x, set: x => { o.x = x; }, ke: eff(o.k), obs: o })));
+    for (const c of cand) {
+      const r = radius(c.ke);
+      if (Math.hypot(mx - px(c.get()), my - (RAIL_Y + 3 - r)) < Math.max(r, 14)) return c;
+    }
+    return null;
+  }
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  cv.addEventListener('pointerdown', e => {
+    const [mx, my] = evPos(e);
+    drag = bodyAt(mx, my);
+    if (drag) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx] = evPos(e);
+    if (drag) drag.set(Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx))));
+    else cv.style.cursor = bodyAt(...evPos(e)) ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('add').addEventListener('click', () => {
+    obs.push({ x: nextX[nextI++ % nextX.length], k: parseFloat(ui.ok.value) });
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    obs = initialObs(); nextI = 0; z = priorM(); v = 0;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

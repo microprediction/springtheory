@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Minimum Variance Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>The minimum-variance portfolio</h1>
+    <p class="subtitle">Allocation as a bead on a rail; short selling as a repulsive spring.</p>
+
+    <p>
+      Hold two assets, fully invested: $w$ in asset 1 and $1-w$ in asset 2, with volatilities
+      $\sigma_1, \sigma_2$ and covariance $c = \rho\,\sigma_1\sigma_2$. Half the portfolio
+      variance decomposes <em>exactly</em> into two spring energies plus a constant that no
+      force ever sees:
+    </p>
+    <div class="equation-card">
+      $$ \tfrac12\,\mathrm{Var}(w) \;=\;
+         \tfrac12\,(\sigma_1^2 - c)\,w^2 \;+\; \tfrac12\,(\sigma_2^2 - c)\,(1-w)^2 \;+\; \tfrac{c}{2}. $$
+    </div>
+    <p>
+      So the fully-invested portfolio is a <strong>bead on the allocation rail</strong>, tied
+      to the corner portfolio &ldquo;all asset 2&rdquo; ($w=0$) by a spring of stiffness
+      $\sigma_1^2 - c$ and to &ldquo;all asset 1&rdquo; ($w=1$) by one of stiffness
+      $\sigma_2^2 - c$. Release it and it settles at the global minimum-variance weight
+      $w^\ast = (\sigma_2^2 - c)\,/\,(\sigma_1^2 + \sigma_2^2 - 2c)$, the bottom of the
+      variance bowl. Note which way the springs pull: asset $i$&apos;s <em>variance</em> is the
+      stiffness dragging the bead <em>away</em> from it &mdash; risk repels. With uncorrelated
+      assets the equilibrium is $w^\ast = \sigma_2^2/(\sigma_1^2+\sigma_2^2)$, i.e. weights
+      proportional to $1/\sigma_i^2$: inverse-variance weighting, the centre-of-mass rule yet
+      again.
+    </p>
+    <p>
+      Now <strong>raise the correlation</strong>. Both springs slacken together, and when
+      $c > \sigma_2^2$ (i.e. $\rho > \sigma_2/\sigma_1$) the spring tied to the safer corner
+      turns <strong>repulsive</strong> &mdash; negative stiffness, drawn red &mdash; and the
+      equilibrium is pushed out of $[0,1]$ into the shaded zone: the minimum-variance portfolio
+      <em>shorts</em> the riskier asset. Short selling is not an add-on here; it is what a
+      repulsive spring does. The total stiffness $\sigma_1^2+\sigma_2^2-2c =
+      \mathrm{Var}(r_1 - r_2)$ stays positive, so the bead always settles.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="400"></canvas>
+      <div class="controls">
+        <label><span class="lab">vol $\sigma_1$</span>
+          <input type="range" id="s1" min="0.4" max="3" step="0.02" value="1.5"><span class="val" id="s1v"></span></label>
+        <label><span class="lab">vol $\sigma_2$</span>
+          <input type="range" id="s2" min="0.4" max="3" step="0.02" value="0.9"><span class="val" id="s2v"></span></label>
+        <label><span class="lab">correlation $\rho$</span>
+          <input type="range" id="cr" min="-0.95" max="0.95" step="0.01" value="0.3"><span class="val" id="crv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="pluck">Pluck</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>$w^\ast$ <b id="rw"></b> / <b id="rw2"></b></span>
+        <span>min vol <b id="rv"></b></span>
+        <span>stiffnesses <b id="rk1"></b>, <b id="rk2"></b></span>
+        <span id="rshort"></span>
+      </div>
+    </div>
+
+    <p>
+      Two deeper connections. First, the minimum-variance weights are
+      $w^\ast \propto \Sigma^{-1}\mathbf{1}$ &mdash; precision row sums &mdash; which makes the
+      minimum-variance portfolio literally the <strong>GLS estimator of a common mean</strong>:
+      the same masses as the <a href="./demo-roll.html">bid-ask bounce demo</a>, wearing a
+      finance hat. Second, for many assets the corner portfolios become blocks, eliminating a
+      block is a Schur complement, and damping that complement interpolates hierarchical and
+      minimum-variance allocation &mdash; the &gamma;-bridge of
+      <a href="https://schur.microprediction.org">schur.microprediction.org</a>, whose scalar
+      shadow is the <a href="./demo-schur-damping.html">Schur damping demo</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 400;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', RED = '#b3542e';
+  const WMIN = -1.2, WMAX = 2.2, PAD = 42;
+  const RAIL_Y = 310, BOWL_TOP = 16, BOWL_BOT = 210;
+
+  const px = w => PAD + (w - WMIN) / (WMAX - WMIN) * (W - 2 * PAD);
+  const wxp = p => WMIN + (p - PAD) / (W - 2 * PAD) * (WMAX - WMIN);
+
+  const ui = { s1: document.getElementById('s1'), s2: document.getElementById('s2'), cr: document.getElementById('cr') };
+  const out = {};
+  ['s1v', 's2v', 'crv', 'rw', 'rw2', 'rv', 'rk1', 'rk2', 'rshort'].forEach(id => out[id] = document.getElementById(id));
+
+  const s1 = () => parseFloat(ui.s1.value);
+  const s2 = () => parseFloat(ui.s2.value);
+  const cc = () => parseFloat(ui.cr.value) * s1() * s2();
+  const k1 = () => s1() * s1() - cc();
+  const k2 = () => s2() * s2() - cc();
+  const K = () => k1() + k2();                       // Var(r1 - r2) > 0
+  const wStar = () => k2() / K();
+  const pvar = w => s1() * s1() * w * w + s2() * s2() * (1 - w) * (1 - w) + 2 * cc() * w * (1 - w);
+
+  let z = 0.5, v = 0;
+  const DT = 1 / 60, ZETA = 0.22, OMEGA = 4;
+  function step() {
+    const F = k1() * (0 - z) + k2() * (1 - z);
+    v += (OMEGA * OMEGA * (F / K()) - 2 * ZETA * OMEGA * v) * DT;
+    z += v * DT;
+  }
+
+  function spring(x1, x2, y, repulsive) {
+    ctx.strokeStyle = repulsive ? RED : '#b5b5b5';
+    if (repulsive) ctx.setLineDash([6, 4]);
+    const gap = Math.abs(x2 - x1);
+    if (gap < 14) { ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.setLineDash([]); return; }
+    const n = Math.max(3, Math.round(gap / 30) + 2), dx = (x2 - x1) / (n * 2 + 2), amp = 9;
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + dx, y);
+    for (let i = 0; i < n * 2; i++)
+      ctx.lineTo(x1 + dx * (i + 1.5), y + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, y); ctx.lineTo(x2, y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const ws = wStar();
+
+    // shaded short-selling zones
+    ctx.fillStyle = '#f4efe9';
+    ctx.fillRect(px(WMIN), BOWL_TOP, px(0) - px(WMIN), RAIL_Y + 6 - BOWL_TOP);
+    ctx.fillRect(px(1), BOWL_TOP, px(WMAX) - px(1), RAIL_Y + 6 - BOWL_TOP);
+    ctx.fillStyle = '#b09a80'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('short asset 1', (px(WMIN) + px(0)) / 2, BOWL_TOP + 16);
+    ctx.fillText('short asset 2', (px(1) + px(WMAX)) / 2, BOWL_TOP + 16);
+
+    // variance bowl
+    const vmin = pvar(ws);
+    let vmax = vmin;
+    for (let w = WMIN; w <= WMAX; w += 0.02) vmax = Math.max(vmax, pvar(w));
+    const uy = u => BOWL_BOT - 10 - (BOWL_BOT - BOWL_TOP - 34) * (1 - (u - vmin) / (vmax - vmin + 1e-9));
+    ctx.strokeStyle = '#c9c7e6'; ctx.lineWidth = 2; ctx.beginPath();
+    for (let w = WMIN; w <= WMAX; w += 0.01) {
+      const p = px(w), q = uy(pvar(w));
+      w === WMIN ? ctx.moveTo(p, q) : ctx.lineTo(p, q);
+    }
+    ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.textAlign = 'left';
+    ctx.fillText('portfolio variance', PAD, BOWL_TOP + 16);
+    // ball in the bowl at the bead's position
+    ctx.fillStyle = ACC; ctx.beginPath();
+    ctx.arc(px(Math.min(WMAX, Math.max(WMIN, z))), uy(pvar(z)) - 5, 5, 0, 7); ctx.fill();
+
+    // closed-form minimum
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = FAINT; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(px(ws), uy(vmin) - 4); ctx.lineTo(px(ws), RAIL_Y + 18); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = FAINT; ctx.textAlign = 'center';
+    ctx.fillText('w* (closed form)', px(ws), RAIL_Y + 46);
+
+    // rail
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(px(WMIN) - 6, RAIL_Y, px(WMAX) - px(WMIN) + 12, 6, 3); ctx.fill();
+
+    // corner posts
+    ctx.fillStyle = INK;
+    for (const [w, lab] of [[0, '100% asset 2'], [1, '100% asset 1']]) {
+      ctx.fillRect(px(w) - 4, RAIL_Y - 26, 8, 26);
+      ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(lab, px(w), RAIL_Y + 22);
+      ctx.fillStyle = INK;
+    }
+
+    // springs (red + dashed when repulsive)
+    ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    const y = RAIL_Y - 13;
+    spring(px(0) + 4, px(z) - 8, y, k1() < 0);
+    spring(px(z) + 8, px(1) - 4, y, k2() < 0);
+
+    // bead
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), y, 8, 0, 7); ctx.fill(); ctx.stroke();
+
+    out.s1v.textContent = s1().toFixed(2);
+    out.s2v.textContent = s2().toFixed(2);
+    out.crv.textContent = parseFloat(ui.cr.value).toFixed(2);
+    out.rw.textContent = ws.toFixed(3);
+    out.rw2.textContent = (1 - ws).toFixed(3);
+    out.rv.textContent = Math.sqrt(Math.max(0, pvar(ws))).toFixed(3);
+    out.rk1.textContent = k1().toFixed(2);
+    out.rk2.textContent = k2().toFixed(2);
+    out.rshort.innerHTML = (k1() < 0 || k2() < 0)
+      ? '<b style="color:#b3542e">repulsive spring: the optimum shorts</b>'
+      : 'both springs attractive: long-only optimum';
+  }
+
+  // --- interaction: drag the bead ------------------------------------------
+  let drag = false;
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  cv.addEventListener('pointerdown', e => {
+    const [mx, my] = evPos(e);
+    if (Math.hypot(mx - px(z), my - (RAIL_Y - 13)) < 16) { drag = true; cv.setPointerCapture(e.pointerId); }
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag) { z = Math.min(WMAX - 0.05, Math.max(WMIN + 0.05, wxp(mx))); v = 0; }
+    else cv.style.cursor = Math.hypot(mx - px(z), my - (RAIL_Y - 13)) < 16 ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = false; });
+
+  document.getElementById('pluck').addEventListener('click', () => { v += 4; });
+  document.getElementById('reset').addEventListener('click', () => {
+    ui.s1.value = 1.5; ui.s2.value = 0.9; ui.cr.value = 0.3; z = 0.5; v = 0;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

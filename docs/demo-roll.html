@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Roll Model Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Bid-ask bounce</h1>
+    <p class="subtitle">A Gaussian Roll model: negatively autocorrelated errors are anti-redundant evidence.</p>
+
+    <p>
+      In Roll&apos;s model of the effective spread, trades bounce between bid and ask, so
+      observed prices carry <strong>negatively autocorrelated</strong> errors around the
+      efficient price $\mu$. Here is a Gaussian stand-in: $y_t = \mu + e_t$ with AR(1) errors
+      $e_t = a\,e_{t-1} + \sqrt{1-a^2}\,\eta_t$ of unit marginal variance. Bounce is $a < 0$;
+      stale, smoothed quotes are $a > 0$; $a = 0$ is the iid case.
+    </p>
+    <p>
+      Correlated errors couple the observations to each other, but for estimating a single
+      $\mu$ the coupling collapses into a <strong>re-weighting of the masses</strong>: the GLS
+      weights are the row sums of the error precision matrix, which for AR(1) come out in
+      closed form as $\tfrac{1}{1+a}$ for the first and last trade and
+      $\tfrac{1-a}{1+a}$ for every interior trade. Slide $a$ negative and watch every body on
+      the rail <em>grow</em> &mdash; bouncing errors cancel, so the evidence is worth
+      <em>more</em> than its naive iid weight and the masses more than add. Slide $a$ positive
+      and the interior trades shrivel to near nothing: redundant evidence. The particle settles
+      at the GLS estimate; the grey line is the naive sample mean, which ignores the bounce.
+      Drag any trade to see the two estimators disagree.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="500"></canvas>
+      <div class="controls">
+        <label><span class="lab">autocorrelation $a$</span>
+          <input type="range" id="ac" min="-0.9" max="0.9" step="0.05" value="-0.6"><span class="val" id="acv"></span></label>
+        <label><span class="lab">trades $n$</span>
+          <input type="range" id="nn" min="4" max="24" step="1" value="12"><span class="val" id="nnv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="regen">New trades</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>GLS estimate <b id="rgls"></b></span>
+        <span>naive mean <b id="rnaive"></b></span>
+        <span>total mass <b id="rmass"></b> vs naive <b id="rnmass"></b></span>
+        <span>an interior trade is worth <b id="rworth"></b> iid trades</span>
+      </div>
+    </div>
+
+    <p>
+      The same trades, weighed twice. With $a=-0.6$ the total mass is more than triple the
+      naive count $n$ &mdash; the posterior is far tighter than the iid analysis admits &mdash;
+      while with $a=0.9$ twenty-four trades carry the mass of about two. Roll&apos;s estimator
+      itself recovers the spread from exactly this signature, the negative first-order
+      autocovariance of price changes: $s = 2\sqrt{-\mathrm{cov}(\Delta p_t, \Delta p_{t-1})}$.
+      See Roll (1984) in the <a href="./index.html#reading">reading list</a>, and the
+      <a href="./dictionary.html">dictionary</a> for where correlated residuals sit in the
+      mechanics.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 500;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a';
+  const XMIN = 0, XMAX = 10, PAD = 42, MU = 5;
+  const T_TOP = 42, T_BOT = 320, RAIL_Y = 430;
+  const NMAX = 24;
+
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = { ac: document.getElementById('ac'), nn: document.getElementById('nn') };
+  const out = {};
+  ['acv', 'nnv', 'rgls', 'rnaive', 'rmass', 'rnmass', 'rworth'].forEach(id => out[id] = document.getElementById(id));
+
+  // fixed innovations, so sliding the autocorrelation morphs the same path
+  let eta = [], override = {};   // override: trades the user has dragged
+  function randn() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function regen() { eta = Array.from({ length: NMAX }, randn); override = {}; }
+  regen();
+
+  const a = () => parseFloat(ui.ac.value);
+  const n = () => parseInt(ui.nn.value, 10);
+
+  function prices() {
+    const aa = a(), y = [];
+    let e = eta[0];
+    for (let t = 0; t < n(); t++) {
+      if (t > 0) e = aa * e + Math.sqrt(1 - aa * aa) * eta[t];
+      y.push(t in override ? override[t] : MU + e);
+    }
+    return y;
+  }
+  // GLS weights = row sums of the AR(1) error precision (unit marginal variance)
+  function weights() {
+    const aa = a(), nn = n(), wEnd = 1 / (1 + aa), wInt = (1 - aa) / (1 + aa);
+    return Array.from({ length: nn }, (_, t) => (t === 0 || t === nn - 1) ? wEnd : wInt);
+  }
+  function estimates(y, w) {
+    let sw = 0, swy = 0, sy = 0;
+    for (let t = 0; t < y.length; t++) { sw += w[t]; swy += w[t] * y[t]; sy += y[t]; }
+    return { gls: swy / sw, mass: sw, naive: sy / y.length };
+  }
+
+  // particle
+  let z = MU, v = 0;
+  const DT = 1 / 60, ZETA = 0.22, OMEGA = 4;
+  function step(y, w, est) {
+    let F = 0;
+    for (let t = 0; t < y.length; t++) F += w[t] * (y[t] - z);
+    v += (OMEGA * OMEGA * (F / est.mass) - 2 * ZETA * OMEGA * v) * DT;
+    z += v * DT;
+  }
+
+  const radius = k => 5 + 5 * Math.sqrt(k);
+  const ty = t => T_TOP + (T_BOT - T_TOP) * (n() === 1 ? 0 : t / (n() - 1));
+
+  function vline(x, y1, y2, color, dash) {
+    ctx.setLineDash(dash || []); ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px(x), y1); ctx.lineTo(px(x), y2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function draw(y, w, est) {
+    ctx.clearRect(0, 0, W, H);
+
+    // reference lines spanning both views
+    vline(MU, T_TOP - 14, RAIL_Y + 8, '#c9c7e6', [5, 4]);
+    vline(est.naive, T_TOP - 14, RAIL_Y + 8, '#bbbbbb', [2, 4]);
+    vline(est.gls, T_TOP - 14, RAIL_Y + 8, '#9fd4bf', []);
+    ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#8a88b8'; ctx.fillText('true μ', px(MU), T_TOP - 20);
+    ctx.fillStyle = FAINT; ctx.fillText('naive mean', px(est.naive), RAIL_Y + 36);
+    ctx.fillStyle = ACC; ctx.fillText('GLS', px(est.gls), RAIL_Y + 22);
+
+    // time panel: price on x, time descending
+    ctx.strokeStyle = '#d9d9d9'; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (let t = 0; t < y.length; t++) {
+      const X = px(y[t]), Y = ty(t);
+      t === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.textAlign = 'left'; ctx.font = '11px sans-serif';
+    ctx.fillText('trades, time ↓', PAD - 14, T_TOP - 20);
+    for (let t = 0; t < y.length; t++) {
+      ctx.fillStyle = ACC;
+      ctx.beginPath(); ctx.arc(px(y[t]), ty(t), 5.5, 0, 7); ctx.fill();
+    }
+
+    // faint droplines from last view to the rail
+    ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 1;
+    for (let t = 0; t < y.length; t++) {
+      ctx.beginPath(); ctx.moveTo(px(y[t]), ty(t) + 6); ctx.lineTo(px(y[t]), RAIL_Y - radius(w[t])); ctx.stroke();
+    }
+
+    // rail: same trades as bodies, sized by their GLS mass
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(PAD - 14, RAIL_Y, W - 2 * PAD + 28, 6, 3); ctx.fill();
+    ctx.globalAlpha = 0.8;
+    for (let t = 0; t < y.length; t++) {
+      const r = radius(w[t]);
+      ctx.fillStyle = ACC;
+      ctx.beginPath(); ctx.arc(px(y[t]), RAIL_Y + 3 - r, r, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = FAINT; ctx.textAlign = 'left';
+    ctx.fillText('the same trades, weighed by the precision row sums', PAD - 14, RAIL_Y - 68);
+
+    // particle at the (animated) GLS equilibrium
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), RAIL_Y - 12, 8, 0, 7); ctx.fill(); ctx.stroke();
+
+    // readouts
+    out.acv.textContent = a().toFixed(2);
+    out.nnv.textContent = n();
+    out.rgls.textContent = est.gls.toFixed(3);
+    out.rnaive.textContent = est.naive.toFixed(3);
+    out.rmass.textContent = est.mass.toFixed(1);
+    out.rnmass.textContent = n().toFixed(0);
+    out.rworth.textContent = ((1 - a()) / (1 + a())).toFixed(2);
+  }
+
+  // --- interaction: drag trades in either view ------------------------------
+  let drag = null;   // index of dragged trade
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my, y, w) {
+    for (let t = 0; t < y.length; t++) {
+      if (Math.hypot(mx - px(y[t]), my - ty(t)) < 12) return t;
+      const r = radius(w[t]);
+      if (Math.hypot(mx - px(y[t]), my - (RAIL_Y + 3 - r)) < Math.max(r, 12)) return t;
+    }
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    const [mx, my] = evPos(e);
+    drag = hit(mx, my, prices(), weights());
+    if (drag !== null) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag !== null) override[drag] = Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx)));
+    else cv.style.cursor = hit(mx, my, prices(), weights()) !== null ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('regen').addEventListener('click', regen);
+  document.getElementById('reset').addEventListener('click', () => {
+    ui.ac.value = -0.6; ui.nn.value = 12; regen(); z = MU; v = 0;
+  });
+
+  (function loop() {
+    const y = prices(), w = weights(), est = estimates(y, w);
+    step(y, w, est); step(y, w, est);
+    draw(y, w, est);
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

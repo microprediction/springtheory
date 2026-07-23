@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Schur Damping Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Schur damping</h1>
+    <p class="subtitle">How far do you trust a floating joint&apos;s recoil?</p>
+
+    <p>
+      Eliminating the free joint from the <a href="./demo-reduced-mass.html">reduced mass
+      demo</a>&apos;s chain is a genuine <strong>Schur complement</strong>. The joint
+      energy&apos;s Hessian in (particle $z$, joint $w$) is the precision matrix, and
+      minimising out $w$ takes the Schur complement of the $w$ block:
+    </p>
+    <div class="equation-card">
+      $$ \Lambda = \begin{pmatrix} p+\rho & -\rho \\ -\rho & \rho+\phi \end{pmatrix},
+         \qquad
+         (p+\rho) \;-\; \frac{\rho^2}{\rho+\phi}
+         \;=\; p \;+\; \underbrace{\frac{\phi\rho}{\phi+\rho}}_{S(1)} . $$
+    </div>
+    <p>
+      The prior&apos;s $p$ rides through untouched, so the particle&apos;s effective stiffness
+      toward the observation is $S(1) = \rho - \rho^2/(\rho+\phi)$: the channel stiffness minus
+      a correction fed back by the joint&apos;s recoil. <strong>Schur damping</strong> keeps
+      only a fraction $\gamma$ of that correction,
+    </p>
+    <div class="equation-card">
+      $$ S(\gamma) \;=\; \rho \;-\; \gamma\,\frac{\rho^2}{\rho+\phi}, $$
+    </div>
+    <p>
+      and the dial has a mechanical reading. At $\gamma = 1$ the joint floats free and the
+      particle feels the exact marginal &mdash; the reduced mass. At $\gamma = 0$ the joint is
+      <strong>clamped to the data</strong>: the particle inherits the channel&apos;s full
+      stiffness $\rho$ and is pulled hard toward $y$, overconfident because the joint&apos;s
+      own uncertainty has been ignored. Interior $\gamma$ trusts the recoil partially &mdash;
+      the right posture when the coupling $\rho$ is estimated rather than known. The same dial,
+      damping the off-diagonal feedback of a partitioned precision matrix, interpolates
+      hierarchical and optimisation-based portfolio construction at the sister site,
+      <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
+    </p>
+    <p>
+      The top rail is the true chain; the bottom rail is the $\gamma$-damped consolidation.
+      <strong>Slide $\gamma$ to 1</strong> and the two particles meet on the dashed line;
+      slide it toward 0 and the bottom body swells to mass $\rho$ and drags its particle
+      toward the observation. Drag any body to move the anchors.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="440"></canvas>
+      <div class="controls">
+        <label><span class="lab">damping $\gamma$</span>
+          <input type="range" id="gm" min="0" max="1" step="0.01" value="0.5"><span class="val" id="gmv"></span></label>
+        <label><span class="lab">obs. mass $\phi$</span>
+          <input type="range" id="phi" min="0.3" max="8" step="0.05" value="3"><span class="val" id="phiv"></span></label>
+        <label><span class="lab">channel $\rho$</span>
+          <input type="range" id="rho" min="0.3" max="8" step="0.05" value="1.5"><span class="val" id="rhov"></span></label>
+        <label><span class="lab">prior mass $P^{-1}$</span>
+          <input type="range" id="pk" min="0.3" max="8" step="0.05" value="2"><span class="val" id="pkv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>damped mass $S(\gamma)$ <b id="rs"></b></span>
+        <span>exact (reduced) mass $S(1)$ <b id="rx"></b></span>
+        <span>chain particle <b id="rz1"></b></span>
+        <span>damped particle <b id="rz2"></b></span>
+      </div>
+    </div>
+
+    <p>
+      Everything is still exact &mdash; the damped rail is a real spring system, just one whose
+      stiffness toward the data is $S(\gamma)$ rather than $S(1)$. One honest caveat: the
+      algebra fixes the damped <em>stiffness</em>, but where the damped spring <em>anchors</em>
+      is a modelling choice; here the undamped remainder stays anchored at the data, which is
+      the plug-in (clamped-joint) reading of $\gamma = 0$. Damping does not break the physics;
+      it changes which physics you assert. See the Schur damping papers via
+      <a href="https://schur.microprediction.org">the schur site&apos;s bibliography</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 440;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a';
+  const XMIN = 0, XMAX = 10, PAD = 42;
+  const RAIL1 = 150, RAIL2 = 350;
+
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = {};
+  ['gm', 'phi', 'rho', 'pk'].forEach(id => ui[id] = document.getElementById(id));
+  const out = {};
+  ['gmv', 'phiv', 'rhov', 'pkv', 'rs', 'rx', 'rz1', 'rz2'].forEach(id => out[id] = document.getElementById(id));
+
+  let m = 2.5, y = 7.5;
+  const gm = () => parseFloat(ui.gm.value);
+  const phi = () => parseFloat(ui.phi.value);
+  const rho = () => parseFloat(ui.rho.value);
+  const pk = () => parseFloat(ui.pk.value);
+  const sExact = () => phi() * rho() / (phi() + rho());
+  const sDamped = () => rho() - gm() * rho() * rho() / (rho() + phi());
+  const targetExact = () => (pk() * m + sExact() * y) / (pk() + sExact());
+  const targetDamped = () => (pk() * m + sDamped() * y) / (pk() + sDamped());
+
+  // state: chain particle z1 + latent bead w; damped particle z2
+  let z1, w, v1, vw, z2, v2;
+  const beadEq = z => (rho() * z + phi() * y) / (rho() + phi());
+  function settle() {
+    z1 = targetExact(); z2 = targetDamped(); w = beadEq(z1); v1 = vw = v2 = 0;
+  }
+  settle();
+
+  const DT = 1 / 60, ZETA = 0.22, OMEGA = 4, WBEAD = 10, ZBEAD = 0.3;
+  function step() {
+    const r = rho(), p = pk(), f = phi();
+    const K1 = p + r, Kw = r + f;
+    const F1 = p * (m - z1) + r * (w - z1);
+    const Fw = r * (z1 - w) + f * (y - w);
+    v1 += (OMEGA * OMEGA * (F1 / K1) - 2 * ZETA * OMEGA * v1) * DT;
+    vw += (WBEAD * WBEAD * (Fw / Kw) - 2 * ZBEAD * WBEAD * vw) * DT;
+    z1 += v1 * DT; w += vw * DT;
+
+    const s = sDamped(), K2 = p + s;
+    const F2 = p * (m - z2) + s * (y - z2);
+    v2 += (OMEGA * OMEGA * (F2 / K2) - 2 * ZETA * OMEGA * v2) * DT;
+    z2 += v2 * DT;
+  }
+
+  const radius = k => 7 + 6.5 * Math.sqrt(k);
+
+  function spring(x1, x2, ypos, amp) {
+    const gap = Math.abs(x2 - x1);
+    if (gap < 14) { ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke(); return; }
+    const n = Math.max(3, Math.round(gap / 30) + 2), dx = (x2 - x1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x1 + dx, ypos);
+    for (let i = 0; i < n * 2; i++)
+      ctx.lineTo(x1 + dx * (i + 1.5), ypos + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+  }
+
+  function rail(ypos) {
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(PAD - 14, ypos, W - 2 * PAD + 28, 6, 3); ctx.fill();
+  }
+
+  function body(x, k, color, ypos, label) {
+    const r = radius(k);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(px(x), ypos + 3 - r, r, 0, 7); ctx.fill();
+    if (r > 12) {
+      ctx.fillStyle = '#fff'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(k.toFixed(1), px(x), ypos + 7 - r);
+    }
+    if (label) {
+      ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, px(x), ypos + 22);
+    }
+  }
+
+  function particle(z, ypos) {
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), ypos - 12, 8, 0, 7); ctx.fill(); ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const tE = targetExact(), tD = targetDamped();
+
+    // exact equilibrium guide, and the damped one
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = '#c9c7e6'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px(tE), 34); ctx.lineTo(px(tE), H - 30); ctx.stroke();
+    ctx.setLineDash([2, 4]); ctx.strokeStyle = '#d9b8a6';
+    ctx.beginPath(); ctx.moveTo(px(tD), RAIL1 + 60); ctx.lineTo(px(tD), H - 30); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('exact posterior mean', px(tE), H - 14);
+    if (Math.abs(px(tD) - px(tE)) > 60) ctx.fillText('damped', px(tD), H - 14);
+
+    ctx.textAlign = 'left';
+    ctx.fillText('the true chain:  y —φ— joint —ρ— particle   (γ = 1 physics)', PAD - 14, 32);
+    ctx.fillText('Schur-damped consolidation:  stiffness S(γ) = ' + sDamped().toFixed(2) +
+      '   (exact would be ' + sExact().toFixed(2) + ')', PAD - 14, RAIL1 + 82);
+
+    // top rail: the chain
+    rail(RAIL1);
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    const yTop = RAIL1 - 12;
+    spring(px(y), px(w), yTop, 10);
+    spring(px(w), px(z1), yTop, 6);
+    spring(px(m), px(z1), yTop, 6);
+    body(m, pk(), INK, RAIL1, 'prior');
+    body(y, phi(), ACC, RAIL1, 'y');
+    ctx.fillStyle = '#8b8b8b';
+    ctx.beginPath(); ctx.arc(px(w), yTop, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('joint', px(w), yTop - 14);
+    particle(z1, RAIL1);
+
+    // bottom rail: damped consolidation
+    rail(RAIL2);
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2;
+    const yBot = RAIL2 - 12;
+    spring(px(y), px(z2), yBot, 6);
+    spring(px(m), px(z2), yBot, 6);
+    body(m, pk(), INK, RAIL2, 'prior');
+    body(y, sDamped(), ACC, RAIL2, 'y, mass S(γ)');
+    particle(z2, RAIL2);
+
+    out.gmv.textContent = gm().toFixed(2);
+    out.phiv.textContent = phi().toFixed(2);
+    out.rhov.textContent = rho().toFixed(2);
+    out.pkv.textContent = pk().toFixed(2);
+    out.rs.textContent = sDamped().toFixed(3);
+    out.rx.textContent = sExact().toFixed(3);
+    out.rz1.textContent = z1.toFixed(3);
+    out.rz2.textContent = z2.toFixed(3);
+  }
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function grabbables() {
+    return [
+      { x: () => m, set: x => { m = x; }, y: RAIL1, r: radius(pk()) },
+      { x: () => m, set: x => { m = x; }, y: RAIL2, r: radius(pk()) },
+      { x: () => y, set: x => { y = x; }, y: RAIL1, r: radius(phi()) },
+      { x: () => y, set: x => { y = x; }, y: RAIL2, r: radius(sDamped()) },
+    ];
+  }
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my) {
+    for (const g of grabbables()) {
+      if (Math.hypot(mx - px(g.x()), my - (g.y + 3 - g.r)) < Math.max(g.r, 14)) return g;
+    }
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = hit(...evPos(e));
+    if (drag) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag) drag.set(Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx))));
+    else cv.style.cursor = hit(mx, my) ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    m = 2.5; y = 7.5; ui.gm.value = 0.5; ui.phi.value = 3; ui.rho.value = 1.5; ui.pk.value = 2;
+    settle();
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

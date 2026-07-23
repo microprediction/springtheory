@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Reduced Mass Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Reduced mass</h1>
+    <p class="subtitle">Springs in series, or how noise drains the weight of evidence.</p>
+
+    <p>
+      Two systems, same prior (dark body). On the <strong>top rail</strong> the observation
+      reaches the test particle through a chain: a spring of stiffness $\phi$ to a free
+      intermediate joint (the latent $x_2$), then a spring of stiffness $\rho$ onward &mdash;
+      the hierarchical model $y \mid x_2 \sim \mathcal N(x_2, \phi^{-1})$,
+      $x_2 \mid \mu \sim \mathcal N(\mu, \rho^{-1})$. On the <strong>bottom rail</strong> the
+      chain has been consolidated into a single body wired directly to the particle, carrying
+      the <strong>reduced mass</strong>
+      $\tilde\phi = \phi\rho/(\phi+\rho)$ &mdash; the series-spring rule, and the mechanical
+      face of &ldquo;variances add along a chain&rdquo;: $\phi^{-1} + \rho^{-1}$.
+    </p>
+    <p>
+      Both particles settle on the same dashed line: the test particle cannot tell the chain
+      from its consolidation. <strong>Slacken $\rho$</strong> and watch the bottom body shrink
+      as the observation&apos;s effective weight drains away; at the far right the channel is
+      rigid ($\rho = \infty$), the joint is pinned, and the full mass $\phi$ comes through.
+      Drag any body, drag the particles off equilibrium and let go, or
+      <strong>pluck</strong> both at once.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="440"></canvas>
+      <div class="controls">
+        <label><span class="lab">obs. mass $\phi$</span>
+          <input type="range" id="phi" min="0.3" max="8" step="0.05" value="3"><span class="val" id="phiv"></span></label>
+        <label><span class="lab">channel $\rho$</span>
+          <input type="range" id="rho" min="0.3" max="8.2" step="0.05" value="1.5"><span class="val" id="rhov"></span></label>
+        <label><span class="lab">prior mass $P^{-1}$</span>
+          <input type="range" id="pk" min="0.3" max="8" step="0.05" value="2"><span class="val" id="pkv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="pluck">Pluck both</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>reduced mass $\tilde\phi$ <b id="reff"></b></span>
+        <span>chain particle <b id="rz1"></b></span>
+        <span>consolidated particle <b id="rz2"></b></span>
+        <span>closed form <b id="rt"></b></span>
+      </div>
+    </div>
+
+    <p>
+      The physicists&apos; reduced-mass formula $m_1 m_2/(m_1+m_2)$ and the statisticians&apos;
+      &ldquo;precisions combine harmonically through a channel&rdquo; are the same equation.
+      Chain more joints and the rule telescopes: $\tilde\phi^{-1} = \sum_j \rho_j^{-1}$. The
+      Kalman filter&apos;s prediction step is exactly one such link &mdash; process noise is a
+      sloppy spring between yesterday&apos;s posterior and today&apos;s prior. Derivation in
+      the <a href="./intro.html">introduction, steps 3&ndash;5</a>.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 440;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a';
+  const XMIN = 0, XMAX = 10, PAD = 42;
+  const RAIL1 = 150, RAIL2 = 350;      // the chain, and its consolidation
+  const RHO_INF = 8.2;
+
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = {};
+  ['phi', 'rho', 'pk'].forEach(id => ui[id] = document.getElementById(id));
+  const out = {};
+  ['phiv', 'rhov', 'pkv', 'reff', 'rz1', 'rz2', 'rt'].forEach(id => out[id] = document.getElementById(id));
+
+  let m = 2.5, y = 7.5;                 // prior and observation anchors (draggable)
+  const phi = () => parseFloat(ui.phi.value);
+  const rho = () => parseFloat(ui.rho.value) >= RHO_INF ? Infinity : parseFloat(ui.rho.value);
+  const pk = () => parseFloat(ui.pk.value);
+  const eff = () => { const r = rho(); return isFinite(r) ? phi() * r / (phi() + r) : phi(); };
+  const target = () => (pk() * m + eff() * y) / (pk() + eff());
+
+  // state: chain particle z1, latent bead w, consolidated particle z2
+  let z1, w, v1, vw, z2, v2;
+  function settle() {
+    z1 = z2 = target(); v1 = v2 = vw = 0;
+    w = beadEq(z1);
+  }
+  const beadEq = z => { const r = rho(); return isFinite(r) ? (r * z + phi() * y) / (r + phi()) : z; };
+  settle();
+
+  const DT = 1 / 60, ZETA = 0.22, OMEGA = 4, WBEAD = 10, ZBEAD = 0.3;
+  function step() {
+    const r = rho(), p = pk(), f = phi();
+    if (isFinite(r)) {
+      // chain: particle feels prior + rho-spring to bead; bead feels rho and phi springs
+      const K1 = p + r, Kw = r + f;
+      const F1 = p * (m - z1) + r * (w - z1);
+      const Fw = r * (z1 - w) + f * (y - w);
+      v1 += (OMEGA * OMEGA * (F1 / K1) - 2 * ZETA * OMEGA * v1) * DT;
+      vw += (WBEAD * WBEAD * (Fw / Kw) - 2 * ZBEAD * WBEAD * vw) * DT;
+      z1 += v1 * DT; w += vw * DT;
+    } else {
+      // rigid channel: the joint is pinned to the particle
+      const K1 = p + f;
+      const F1 = p * (m - z1) + f * (y - z1);
+      v1 += (OMEGA * OMEGA * (F1 / K1) - 2 * ZETA * OMEGA * v1) * DT;
+      z1 += v1 * DT; w = z1; vw = 0;
+    }
+    // consolidated: one body of reduced mass, wired directly
+    const K2 = pk() + eff();
+    const F2 = pk() * (m - z2) + eff() * (y - z2);
+    v2 += (OMEGA * OMEGA * (F2 / K2) - 2 * ZETA * OMEGA * v2) * DT;
+    z2 += v2 * DT;
+  }
+
+  const radius = k => 7 + 6.5 * Math.sqrt(k);
+
+  function spring(x1, x2, ypos, amp) {
+    const gap = Math.abs(x2 - x1);
+    if (gap < 14) { ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke(); return; }
+    const n = Math.max(3, Math.round(gap / 30) + 2), dx = (x2 - x1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x1 + dx, ypos);
+    for (let i = 0; i < n * 2; i++)
+      ctx.lineTo(x1 + dx * (i + 1.5), ypos + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+  }
+
+  function rail(ypos) {
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(PAD - 14, ypos, W - 2 * PAD + 28, 6, 3); ctx.fill();
+  }
+
+  function body(x, k, color, ypos, label) {
+    const r = radius(k);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(px(x), ypos + 3 - r, r, 0, 7); ctx.fill();
+    if (r > 12) {
+      ctx.fillStyle = '#fff'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(k.toFixed(1), px(x), ypos + 7 - r);
+    }
+    if (label) {
+      ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, px(x), ypos + 22);
+    }
+  }
+
+  function particle(z, ypos) {
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), ypos - 12, 8, 0, 7); ctx.fill(); ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const t = target(), fe = eff(), rfin = isFinite(rho());
+
+    // shared equilibrium guide
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = '#c9c7e6'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px(t), 34); ctx.lineTo(px(t), H - 30); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('posterior mean (closed form)', px(t), H - 14);
+
+    // captions
+    ctx.textAlign = 'left';
+    ctx.fillText(rfin ? 'the hierarchical chain:  y —φ— x₂ —ρ— particle' : 'the hierarchical chain (ρ = ∞: joint pinned to the particle)', PAD - 14, 32);
+    ctx.fillText('consolidated:  y carrying the reduced mass  φρ/(φ+ρ) = ' + fe.toFixed(2), PAD - 14, RAIL1 + 82);
+
+    // ---- top rail: the chain ----
+    rail(RAIL1);
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    const yTop = RAIL1 - 12;
+    // phi spring: observation body to bead; rho spring: bead to particle
+    const bead = rfin ? w : z1;
+    spring(px(y), px(bead), yTop, 10);
+    spring(px(bead), px(z1), yTop, 6);
+    body(m, pk(), INK, RAIL1, 'prior');
+    body(y, phi(), ACC, RAIL1, 'y');
+    // bead (the latent joint)
+    ctx.fillStyle = '#8b8b8b';
+    ctx.beginPath(); ctx.arc(px(bead), yTop, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a5a5a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x₂', px(bead), yTop - 14);
+    // prior spring
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2;
+    spring(px(m), px(z1), yTop, 6);
+    particle(z1, RAIL1);
+
+    // ---- bottom rail: consolidated ----
+    rail(RAIL2);
+    ctx.strokeStyle = '#b5b5b5'; ctx.lineWidth = 2;
+    const yBot = RAIL2 - 12;
+    spring(px(y), px(z2), yBot, 6);
+    spring(px(m), px(z2), yBot, 6);
+    body(m, pk(), INK, RAIL2, 'prior');
+    body(y, fe, ACC, RAIL2, 'y (reduced)');
+    particle(z2, RAIL2);
+
+    // readouts
+    out.phiv.textContent = phi().toFixed(2);
+    out.rhov.textContent = rfin ? rho().toFixed(2) : '∞';
+    out.pkv.textContent = pk().toFixed(2);
+    out.reff.textContent = fe.toFixed(3);
+    out.rz1.textContent = z1.toFixed(3);
+    out.rz2.textContent = z2.toFixed(3);
+    out.rt.textContent = t.toFixed(3);
+  }
+
+  // --- interaction ---------------------------------------------------------
+  let drag = null;
+  function grabbables() {
+    return [
+      { x: () => m, set: x => { m = x; }, y: RAIL1, r: radius(pk()), body: true },
+      { x: () => m, set: x => { m = x; }, y: RAIL2, r: radius(pk()), body: true },
+      { x: () => y, set: x => { y = x; }, y: RAIL1, r: radius(phi()), body: true },
+      { x: () => y, set: x => { y = x; }, y: RAIL2, r: radius(eff()), body: true },
+      { x: () => z1, set: x => { z1 = x; v1 = 0; }, y: RAIL1, r: 10, body: false },
+      { x: () => z2, set: x => { z2 = x; v2 = 0; }, y: RAIL2, r: 10, body: false },
+    ];
+  }
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my) {
+    for (const g of grabbables()) {
+      const cy = g.body ? g.y + 3 - g.r : g.y - 12;
+      if (Math.hypot(mx - px(g.x()), my - cy) < Math.max(g.r, 14)) return g;
+    }
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = hit(...evPos(e));
+    if (drag) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag) drag.set(Math.min(XMAX - 0.2, Math.max(XMIN + 0.2, wx(mx))));
+    else cv.style.cursor = hit(mx, my) ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('pluck').addEventListener('click', () => { v1 += 5; v2 += 5; });
+  document.getElementById('reset').addEventListener('click', () => {
+    m = 2.5; y = 7.5; ui.phi.value = 3; ui.rho.value = 1.5; ui.pk.value = 2; settle();
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

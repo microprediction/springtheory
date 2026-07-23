@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Dictionary</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <a href="./demos.html">Demos</a>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./index.html">&larr; Home</a></p>
+    <h1>The Dictionary</h1>
+    <p class="subtitle">Mechanics on the left, statistics on the right. Exact whenever energies are quadratic.</p>
+
+    <div class="table-wrap">
+      <table class="dict">
+        <thead>
+          <tr><th>Mechanics</th><th>Statistics</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>mass / spring stiffness $k$</td>
+            <td>precision $1/\sigma^2$</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>potential energy $\tfrac12 k (z-x)^2$</td>
+            <td>negative log-likelihood</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>force $k(x-z)$</td>
+            <td>score $\tfrac{d}{dz}\log p(z)$</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>equilibrium</td>
+            <td>posterior mean (= mode)</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>centre of mass</td>
+            <td>Kalman update $m' = \dfrac{P^{-1}m + R^{-1}y}{P^{-1}+R^{-1}}$</td>
+            <td><a href="./demo-fusion.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>masses in parallel add</td>
+            <td>independent precisions add</td>
+            <td><a href="./demo-fusion.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>springs in series: reduced mass $\dfrac{m_1 m_2}{m_1+m_2}$</td>
+            <td>variances add through a noisy channel; the Kalman prediction step</td>
+            <td><a href="./demo-reduced-mass.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>rigid rod on vertical springs</td>
+            <td>least squares regression</td>
+            <td><a href="./demo-least-squares.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>rod on frictionless sliding collars</td>
+            <td>PCA (total least squares)</td>
+            <td><a href="./demo-pca.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>bead chain: measurement + neighbour springs</td>
+            <td>Kalman smoother; Whittaker graduation</td>
+            <td><a href="./index.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>masses re-weighted by error correlations</td>
+            <td>GLS; bid-ask bounce as anti-redundant evidence</td>
+            <td><a href="./demo-roll.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>bead between corner posts; repulsive spring</td>
+            <td>minimum-variance portfolio; short selling</td>
+            <td><a href="./demo-minvar.html">demo</a></td>
+          </tr>
+          <tr>
+            <td>thermal jitter</td>
+            <td>posterior sampling (Langevin)</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      The correspondence is exact only for Gaussians: non-Gaussian likelihoods are non-Hookean
+      springs &mdash; equilibrium still finds the mode, but subsystems can no longer be replaced
+      by a single equivalent body.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+</body>
+</html>
