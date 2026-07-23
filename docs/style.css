@@ -32,6 +32,22 @@ header.site-header nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
 header.site-header nav a { color: #fff; opacity: 0.85; font-size: 0.95rem; }
 header.site-header nav a:hover { opacity: 1; }
 
+.nav-dropdown { position: relative; }
+.nav-dropdown > a::after { content: ' \25BE'; font-size: 0.75em; opacity: 0.8; }
+.nav-dropdown-menu {
+  display: none; position: absolute; top: 100%; left: 0; z-index: 20;
+  background: var(--ink); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 6px; margin-top: 8px;
+  min-width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu a {
+  display: block; padding: 7px 10px; border-radius: 5px;
+  font-size: 0.88rem; opacity: 0.9; white-space: nowrap;
+}
+.nav-dropdown-menu a:hover { opacity: 1; background: rgba(255,255,255,0.08); text-decoration: none; }
+
 main { max-width: 1020px; margin: 32px auto; padding: 0 24px 60px; }
 h1 { font-size: 2.1rem; margin: 0 0 4px; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.12rem; margin: 0 0 24px; }
