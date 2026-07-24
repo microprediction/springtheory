@@ -47,22 +47,21 @@
   <main>
     <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
     <h1>Least angle regression</h1>
-    <p class="subtitle">Lower the tension slowly, and predictors engage one at a time &mdash; each held at exactly the ceiling.</p>
+    <p class="subtitle">Lower the tension slowly and predictors engage one at a time, each held at the ceiling.</p>
 
     <p>
       The <a href="./demo-lasso.html">Lasso demo</a> replaced the shrinkage spring with a
-      <em>constant-tension</em> pulley of force $\lambda$: a predictor sits at exactly zero until
-      its correlation with the residual exceeds $\lambda$, at which point it engages. Least angle
-      regression (LARS) is what you get when you take that one threshold and <strong>lower it
-      continuously</strong> from very high to zero, watching the whole configuration re-form as
-      it descends.
+      constant-tension pulley of force $\lambda$. A predictor sits at zero until its correlation
+      with the residual exceeds $\lambda$. Then it engages. Least angle regression (LARS) is what
+      you get when you take that one threshold and lower it continuously from very high to zero.
+      The whole configuration re-forms as it descends.
     </p>
     <p>
-      The Karush&ndash;Kuhn&ndash;Tucker conditions for the Lasso say exactly this: at penalty
-      $\lambda$, every <em>active</em> predictor has $|x_j^{\top} r| = \lambda$ &mdash; its
-      correlation with the residual is pinned to the ceiling &mdash; while every idle one sits
-      strictly below, $|x_j^{\top} r| \le \lambda$. So as $\lambda$ falls the active predictors
-      march down together, always tied, always equal to the current tension:
+      The Karush-Kuhn-Tucker conditions for the Lasso say this. At penalty $\lambda$, every
+      <em>active</em> predictor has $|x_j^{\top} r| = \lambda$. Its correlation with the residual
+      is pinned to the ceiling. Every idle one sits strictly below, $|x_j^{\top} r| \le \lambda$.
+      So as $\lambda$ falls the active predictors march down together, always tied, always equal
+      to the current tension:
     </p>
     <div class="equation-card">
       $$ x_j^{\top}\!\left(y - X\beta\right) = \lambda\,\operatorname{sign}(\beta_j)\ \ (j\ \text{active}),
@@ -70,13 +69,12 @@
     </div>
     <p>
       The name is the mechanism. To keep every active correlation equal as the fit advances, the
-      fitted vector must move along the direction that makes <strong>equal angles</strong> with
-      all active predictors &mdash; the <em>least angle</em>, equiangular direction. Move that way
-      and the tied correlations decay in lockstep; an idle predictor stays out until the
-      descending ceiling reaches its correlation, and then it joins. Between two such joins the
-      coefficients are exactly <strong>linear</strong> in $\lambda$, so the whole solution path is
-      piecewise-linear with a kink at each engagement &mdash; and it <em>is</em> the Lasso path,
-      traced from the top down.
+      fitted vector must move along the direction that makes equal angles with all active
+      predictors. That is the <em>least angle</em>, equiangular direction. Move that way and the
+      tied correlations decay in lockstep. An idle predictor stays out until the descending
+      ceiling reaches its correlation, and then it joins. Between two such joins the coefficients
+      are linear in $\lambda$. So the whole solution path is piecewise-linear with a kink at each
+      engagement. And it is the Lasso path, traced from the top down.
     </p>
 
     <div class="demo-panel">
@@ -97,23 +95,23 @@
     </div>
 
     <p>
-      <strong>Top:</strong> the descending ceiling. Each line is one predictor&apos;s absolute
-      correlation with the current residual, $|x_j^{\top} r|$, plotted against $\lambda$ (which
-      runs high&#8594;low, left to right). The dashed diagonal is the ceiling $|c| = \lambda$
-      itself. Idle predictors ride <em>below</em> it; the moment a line touches the ceiling that
-      predictor engages and then travels <em>down the diagonal</em>, glued to $\lambda$ &mdash;
-      tied with every other active one. <strong>Bottom:</strong> the coefficient path, sharing
-      the same $\lambda$ axis, so the dotted sweep line links the two &mdash; each $\beta_j$
-      leaves zero at exactly the $\lambda$ where, directly above, its correlation hit the
-      ceiling, and every segment is a straight line. <strong>Drag $\lambda$</strong>, or press
-      <em>Lower the ceiling</em>, and watch the four predictors engage one after another; at
-      $\lambda = 0$ the path arrives at the ordinary least-squares fit.
+      <em>Top:</em> the descending ceiling. Each line is one predictor&apos;s absolute
+      correlation with the current residual, $|x_j^{\top} r|$, plotted against $\lambda$. The
+      penalty runs from high to low, left to right. The dashed diagonal is the ceiling
+      $|c| = \lambda$ itself. Idle predictors ride below it. The moment a line touches the ceiling
+      that predictor engages. It then travels down the diagonal, glued to $\lambda$ and tied with
+      every other active one. <em>Bottom:</em> the coefficient path, sharing the same $\lambda$
+      axis. The dotted sweep line links the two. Each $\beta_j$ leaves zero at the same $\lambda$
+      where its correlation hit the ceiling directly above. Every segment is a straight line.
+      Drag $\lambda$, or press <em>Lower the ceiling</em>, and watch the four predictors engage
+      one after another. At $\lambda = 0$ the path arrives at the ordinary least-squares fit.
     </p>
     <p>
-      Efron, Hastie, Johnstone &amp; Tibshirani (2004) introduced LARS precisely as this
-      descent: a single, exact, order-$p$ sweep that produces the entire Lasso regularisation
-      path, one equiangular segment per active-set change &mdash; the constant-tension device of
-      the <a href="./demo-lasso.html">previous demo</a>, filmed as its weight is slowly lifted.
+      Efron, Hastie, Johnstone and Tibshirani introduced LARS in 2004 as this descent. A single
+      order-$p$ sweep produces the entire Lasso regularisation path, one equiangular segment per
+      active-set change. It is the constant-tension device of the
+      <a href="./demo-lasso.html">previous demo</a>, filmed as its weight is slowly lifted. Their
+      paper appeared in the Annals of Statistics.
     </p>
   </main>
 

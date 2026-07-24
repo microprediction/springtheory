@@ -50,23 +50,21 @@
     <p class="subtitle">Springs in series, or how noise drains the weight of evidence.</p>
 
     <p>
-      Two systems, same prior (dark body). On the <strong>top rail</strong> the observation
-      reaches the test particle through a chain: a spring of stiffness $\phi$ to a free
-      intermediate joint (the latent $x_2$), then a spring of stiffness $\rho$ onward &mdash;
-      the hierarchical model $y \mid x_2 \sim \mathcal N(x_2, \phi^{-1})$,
-      $x_2 \mid \mu \sim \mathcal N(\mu, \rho^{-1})$. On the <strong>bottom rail</strong> the
-      chain has been consolidated into a single body wired directly to the particle, carrying
-      the <strong>reduced mass</strong>
-      $\tilde\phi = \phi\rho/(\phi+\rho)$ &mdash; the series-spring rule, and the mechanical
-      face of &ldquo;variances add along a chain&rdquo;: $\phi^{-1} + \rho^{-1}$.
+      Two systems share the same prior, the dark body. On the top rail the observation reaches
+      the test particle through a chain. A spring of stiffness $\phi$ runs to a free intermediate
+      joint, the latent $x_2$. A second spring of stiffness $\rho$ carries on to the particle.
+      That is the hierarchical model $y \mid x_2 \sim \mathcal N(x_2, \phi^{-1})$,
+      $x_2 \mid \mu \sim \mathcal N(\mu, \rho^{-1})$. On the bottom rail the chain has been
+      consolidated into a single body wired directly to the particle. It carries the
+      <em>reduced mass</em> $\tilde\phi = \phi\rho/(\phi+\rho)$. That is the series-spring rule,
+      and the mechanical face of &ldquo;variances add along a chain&rdquo;, $\phi^{-1} + \rho^{-1}$.
     </p>
     <p>
-      Both particles settle on the same dashed line: the test particle cannot tell the chain
-      from its consolidation. <strong>Slacken $\rho$</strong> and watch the bottom body shrink
-      as the observation&apos;s effective weight drains away; at the far right the channel is
-      rigid ($\rho = \infty$), the joint is pinned, and the full mass $\phi$ comes through.
-      Drag any body, drag the particles off equilibrium and let go, or
-      <strong>pluck</strong> both at once.
+      Both particles settle on the same dashed line. The test particle cannot tell the chain from
+      its consolidation. Slacken $\rho$ and watch the bottom body shrink as the observation&apos;s
+      effective weight drains away. At the far right the channel is rigid at $\rho = \infty$. The
+      joint is pinned and the full mass $\phi$ comes through. Drag any body, drag the particles
+      off equilibrium and let go, or pluck both at once.
     </p>
 
     <div class="demo-panel">
@@ -94,10 +92,12 @@
     <p>
       The physicists&apos; reduced-mass formula $m_1 m_2/(m_1+m_2)$ and the statisticians&apos;
       &ldquo;precisions combine harmonically through a channel&rdquo; are the same equation.
-      Chain more joints and the rule telescopes: $\tilde\phi^{-1} = \sum_j \rho_j^{-1}$. The
-      Kalman filter&apos;s prediction step is exactly one such link &mdash; process noise is a
-      sloppy spring between yesterday&apos;s posterior and today&apos;s prior. Derivation in
-      the <a href="./intro.html">introduction, steps 3&ndash;5</a>.
+      Chain more joints and the rule telescopes to $\tilde\phi^{-1} = \sum_j \rho_j^{-1}$. The
+      formula turns two orbiting bodies into one fictitious body about a fixed point. Newton
+      solved that two-body problem by geometry in the <em>Principia</em> of 1687, long before
+      anyone weighed evidence with it. The Kalman filter&apos;s prediction step is one such link.
+      Process noise is a slack spring between yesterday&apos;s posterior and today&apos;s prior.
+      Derivation in the <a href="./intro.html">introduction, steps 3&ndash;5</a>.
     </p>
   </main>
 

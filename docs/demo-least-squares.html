@@ -51,14 +51,16 @@
 
     <p>
       Each data point is tied to a rigid rod by a spring of natural length zero and unit
-      stiffness, running in a frictionless vertical guide so it can only stretch up and down.
-      The stored energy is then exactly $\tfrac12\sum_i r_i^2$ &mdash; half the residual sum of
-      squares. Release the rod and it relaxes until the spring forces and torques balance, which
-      is exactly the normal equations: the resting position is the ordinary least squares line
-      (dashed, computed in closed form). <strong>Drag the points</strong> and the rod chases the
-      new fit; <strong>pluck</strong> it to see it oscillate back. The idea follows
+      stiffness. The spring runs in a frictionless vertical guide, so it can only stretch up and
+      down. The stored energy is then $\tfrac12\sum_i r_i^2$, half the residual sum of squares.
+      Release the rod and it relaxes until the spring forces and torques balance. That balance is
+      the normal equations. The resting position is the ordinary least squares line, drawn dashed
+      and computed in closed form. <em>Drag the points</em> and the rod chases the new fit.
+      <em>Pluck</em> it to see it oscillate back. The picture follows
       <a href="https://joshualoftus.com/posts/2020-11-23-least-squares-as-springs/least-squares-as-springs.html">Joshua
-      Loftus&apos;s &ldquo;Least Squares as Springs&rdquo;</a>; for drawing springs properly, see
+      Loftus&apos;s &ldquo;Least Squares as Springs&rdquo;</a>. Loftus found it hard to turn up
+      early references. The oldest is T. W. Dwight, a forester, who fitted regression lines by
+      least squares this way in The Forestry Chronicle in 1937. For drawing springs properly, see
       Hadley Wickham&apos;s <a href="https://ggplot2-book.org/spring1.html">spring geom case
       study</a> in the ggplot2 book.
     </p>
@@ -78,10 +80,10 @@
     </div>
 
     <p>
-      In the <a href="./dictionary.html">dictionary</a>: stiffness is precision, so weighted
-      least squares is nothing but unequal springs, and adding a ridge penalty is one more spring
-      tying the rod to the prior. Generalise from a rod to a network of beads and you are back at
-      the <a href="./demo-fusion.html">fusion demo</a> and the Kalman filter.
+      The <a href="./dictionary.html">dictionary</a> has the rest. Stiffness is precision.
+      Weighted least squares is just unequal springs. A ridge penalty is one more spring tying
+      the rod to the prior. Generalise from a rod to a network of beads and you are back at the
+      <a href="./demo-fusion.html">fusion demo</a> and the Kalman filter.
     </p>
   </main>
 

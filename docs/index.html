@@ -69,61 +69,57 @@
     </div>
 
     <p>
-      <strong>Stiffen the chain</strong> and it pulls taut toward a constant (all evidence
-      pooled); slacken it and each bead chases its own observation.
-      <strong>Drag an observation</strong> and watch the disturbance propagate a few springs
-      down the chain and die out. Most fun: <strong>add an observation</strong> and watch the
-      whole posterior path re-equilibrate to accommodate it. This is the <em>smoother</em>
-      &mdash; the whole path relaxing at once. For the <em>filter</em> &mdash; one body running
-      forward through time, tick by tick &mdash; see the
-      <a href="./demo-kalman-filter.html">filter-through-time demo</a>.
+      Stiffen the chain and it pulls taut toward a constant. All the evidence is pooled.
+      Slacken it and each bead chases its own observation. Drag an observation. The disturbance
+      runs a few springs down the chain and dies out. Add an observation. The whole posterior
+      path re-equilibrates to take it in. This is the <em>smoother</em>. The whole path relaxes
+      at once. The <em>filter</em> is one body running forward through time, tick by tick. See
+      the <a href="./demo-kalman-filter.html">filter-through-time demo</a>.
     </p>
 
     <h2>What you are looking at: the Kalman smoother as a bead chain</h2>
     <p>
-      The local-level model &mdash; a random-walk state observed in noise,
-      $x_{t+1} = x_t + \mathcal{N}(0, q^{-1})$, $y_t = x_t + \mathcal{N}(0, r^{-1})$ &mdash;
-      is a chain of beads. Each green bead $x_t$ rides a <strong>frictionless vertical
-      rod</strong> at its time slot, hangs from its observation (dark) by a
-      <strong>measurement spring</strong> of stiffness $r$, and is tied to its neighbours by
-      <strong>process-noise springs</strong> of stiffness $q$. The rods matter: they stop the
-      chain contracting sideways, and because the springs have zero natural length the diagonal
-      neighbour spring&apos;s energy splits exactly into a constant (the fixed horizontal span)
-      plus $\tfrac12 q\,(x_{t+1}-x_t)^2$ &mdash; so the constant drops out of the mechanics and
-      the total stored energy is, exactly, the negative log posterior of the entire path,
+      The local-level model is a chain of beads. It is a random-walk state observed in noise,
+      $x_{t+1} = x_t + \mathcal{N}(0, q^{-1})$, $y_t = x_t + \mathcal{N}(0, r^{-1})$. Each green
+      bead $x_t$ rides a frictionless vertical rod at its time slot. It hangs from its
+      observation by a measurement spring of stiffness $r$. It is tied to its neighbours by
+      process-noise springs of stiffness $q$. The rods stop the chain contracting sideways. The
+      springs have zero natural length, so the diagonal neighbour spring&apos;s energy splits
+      into a constant, the fixed horizontal span, plus $\tfrac12 q\,(x_{t+1}-x_t)^2$. The
+      constant drops out of the mechanics. The total stored energy is then the negative log
+      posterior of the entire path,
     </p>
     <div class="equation-card">
       $$ E \;=\; \tfrac12 \sum_t r\,(x_t - y_t)^2 \;+\; \tfrac12 \sum_t q\,(x_{t+1} - x_t)^2. $$
     </div>
     <p>
-      The chain&apos;s resting shape therefore <em>is</em> the <strong>Kalman
-      smoother</strong> &mdash; equally, Whittaker&ndash;Henderson graduation with a
-      first-difference penalty, the Hodrick&ndash;Prescott filter&apos;s older sibling. The
-      dashed curve is the exact smoother from a tridiagonal solve; the beads just obey
-      $F = ma$ with damping. That they agree is the point: this is an exact physical analog,
-      not an illustration. The smoother&apos;s influence is local &mdash; a dragged observation
-      disturbs only a few springs&apos; worth of chain &mdash; which is why filtering and
+      So the chain&apos;s resting shape <em>is</em> the Kalman smoother. Equally, it is
+      Whittaker-Henderson graduation with a first-difference penalty, the older sibling of
+      the Hodrick-Prescott filter. Whittaker introduced graduation in 1923. The dashed
+      curve is the exact smoother from a tridiagonal solve. The beads obey $F = ma$ with
+      damping. They settle on the same curve. The smoother&apos;s influence is local. A dragged
+      observation disturbs only a few springs&apos; worth of chain. That is why filtering and
       smoothing agree except near the ends.
     </p>
     <p class="lead">
-      Every Gaussian belief is a spring: its negative log-density is a quadratic potential
-      well, so <strong>precision is mass</strong>, <strong>energy is negative
-      log-likelihood</strong>, and estimation is mechanical equilibrium. Each link of the chain
-      above is one series spring (the prediction step bleeding precision); each measurement
-      spring adds its mass in parallel; run left to right doing those two moves and you have
-      the Kalman <em>filter</em>. The <a href="./intro.html">introduction</a> derives the
-      correspondence, the <a href="./dictionary.html">dictionary</a> tabulates it, and the
+      Every Gaussian belief is a spring. Its negative log-density is a quadratic potential well.
+      So precision is mass, energy is negative log-likelihood, and estimation is mechanical
+      equilibrium. Each link of the chain above is one series spring, the prediction step
+      bleeding precision. Each measurement spring adds its mass in parallel. Run left to right
+      doing those two moves and you have the Kalman <em>filter</em>. The
+      <a href="./intro.html">introduction</a> derives the correspondence. The
+      <a href="./dictionary.html">dictionary</a> tabulates it. The
       <a href="./demos.html">demos page</a> has more exact analogs: evidence fusion, reduced
       mass, the filter through time, conditioning a Gaussian graph, Schur damping, least
-      squares, minimum variance, PCA, bid-ask bounce, and where the analogy breaks &mdash;
-      Ridge vs Lasso.
+      squares, minimum variance, PCA, bid-ask bounce, and where the analogy breaks, Ridge vs
+      Lasso.
     </p>
 
     <div class="bib">
       <h2 id="reading">Bibliography</h2>
-      <p>Works on, behind, or adjacent to the mechanical view of Gaussian inference. Many of
-      these were collected by <a href="https://joshualoftus.com/about.html">Joshua Loftus</a>,
-      whose post revived the analogy.</p>
+      <p>Works on, behind, and adjacent to the mechanical view of Gaussian inference.
+      <a href="https://joshualoftus.com/about.html">Joshua Loftus</a> collected many of them.
+      His post revived the analogy.</p>
 
       <h3>The core</h3>
       <ul>
@@ -149,8 +145,8 @@
           Wickham, H., Navarro, D., and Pedersen, T. L.
           <a href="https://ggplot2-book.org/spring1.html"><em>ggplot2: Elegant Graphics for
           Data Analysis</em>, &ldquo;A case study: drawing springs&rdquo;</a>.
-          <em>Hadley Wickham&apos;s worked example of rendering springs as a ggplot2 geom
-          &mdash; how to draw these diagrams properly in R.</em>
+          <em>Hadley Wickham&apos;s worked example of rendering springs as a ggplot2 geom. How
+          to draw these diagrams properly in R.</em>
         </li>
       </ul>
 
@@ -159,7 +155,7 @@
         <li>
           Pearson, K. (1901). &ldquo;On Lines and Planes of Closest Fit to Systems of Points in
           Space.&rdquo; <em>Philosophical Magazine</em> 2(11), 559&ndash;572. <em>PCA, born as
-          an orthogonal-fitting problem &mdash; the rod-on-collars of the
+          an orthogonal-fitting problem. The rod-on-collars of the
           <a href="./demo-pca.html">PCA demo</a>.</em>
         </li>
         <li>
@@ -218,7 +214,7 @@
           Sohl-Dickstein, J., et al. (2015). &ldquo;Deep Unsupervised Learning using
           Nonequilibrium Thermodynamics.&rdquo;
           <a href="https://arxiv.org/abs/1503.03585">arXiv:1503.03585</a>. <em>Diffusion
-          models: thermal jitter as a generative device &mdash; the dictionary&apos;s last row,
+          models: thermal jitter as a generative device. The dictionary&apos;s last row,
           industrialised.</em>
         </li>
       </ul>
@@ -235,7 +231,7 @@
           Core77 (2016).
           <a href="https://www.core77.com/posts/55368/When-Splines-Were-Physical-Objects">&ldquo;When
           Splines Were Physical Objects.&rdquo;</a> <em>Draughtsmen&apos;s splines: bent wood
-          held by weights, minimising bending energy &mdash; smoothing before software.</em>
+          held by weights, minimising bending energy. Smoothing before software.</em>
         </li>
         <li>
           Simpson, G. (2016).
@@ -246,7 +242,7 @@
         <li>
           Strang, G. (2008). <a href="https://ocw.mit.edu/courses/mathematics/18-085-computational-science-and-engineering-i-fall-2008/">MIT
           OCW 18.085, Computational Science and Engineering I</a>, Lecture 1. <em>Spring-mass
-          chains and their stiffness matrices &mdash; the linear algebra under every demo
+          chains and their stiffness matrices. The linear algebra under every demo
           here.</em>
         </li>
         <li>

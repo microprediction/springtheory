@@ -50,23 +50,22 @@
     <p class="subtitle">A Gaussian Roll model: negatively autocorrelated errors are anti-redundant evidence.</p>
 
     <p>
-      In Roll&apos;s model of the effective spread, trades bounce between bid and ask, so
-      observed prices carry <strong>negatively autocorrelated</strong> errors around the
-      efficient price $\mu$. Here is a Gaussian stand-in: $y_t = \mu + e_t$ with AR(1) errors
-      $e_t = a\,e_{t-1} + \sqrt{1-a^2}\,\eta_t$ of unit marginal variance. Bounce is $a < 0$;
-      stale, smoothed quotes are $a > 0$; $a = 0$ is the iid case.
+      In Roll&apos;s model of the effective spread, trades bounce between bid and ask. So
+      observed prices carry <em>negatively autocorrelated</em> errors around the efficient price
+      $\mu$. Here is a Gaussian stand-in: $y_t = \mu + e_t$ with AR(1) errors
+      $e_t = a\,e_{t-1} + \sqrt{1-a^2}\,\eta_t$ of unit marginal variance. Bounce is $a < 0$.
+      Stale, smoothed quotes are $a > 0$. The case $a = 0$ is iid.
     </p>
     <p>
-      Correlated errors couple the observations to each other, but for estimating a single
-      $\mu$ the coupling collapses into a <strong>re-weighting of the masses</strong>: the GLS
-      weights are the row sums of the error precision matrix, which for AR(1) come out in
-      closed form as $\tfrac{1}{1+a}$ for the first and last trade and
-      $\tfrac{1-a}{1+a}$ for every interior trade. Slide $a$ negative and watch every body on
-      the rail <em>grow</em> &mdash; bouncing errors cancel, so the evidence is worth
-      <em>more</em> than its naive iid weight and the masses more than add. Slide $a$ positive
-      and the interior trades shrivel to near nothing: redundant evidence. The particle settles
-      at the GLS estimate; the grey line is the naive sample mean, which ignores the bounce.
-      Drag any trade to see the two estimators disagree.
+      Correlated errors couple the observations to each other. But for estimating a single $\mu$
+      the coupling collapses into a re-weighting of the masses. The GLS weights are the row sums
+      of the error precision matrix. For AR(1) they come out in closed form. The first and last
+      trade get $\tfrac{1}{1+a}$ and every interior trade gets $\tfrac{1-a}{1+a}$. Slide $a$
+      negative and watch every body on the rail grow. Bouncing errors cancel. The evidence is
+      worth more than its naive iid weight and the masses more than add. Slide $a$ positive and
+      the interior trades shrivel to near nothing. That is redundant evidence. The particle
+      settles at the GLS estimate. The grey line is the naive sample mean, which ignores the
+      bounce. Drag any trade to see the two estimators disagree.
     </p>
 
     <div class="demo-panel">
@@ -90,14 +89,14 @@
     </div>
 
     <p>
-      The same trades, weighed twice. With $a=-0.6$ the total mass is more than triple the
-      naive count $n$ &mdash; the posterior is far tighter than the iid analysis admits &mdash;
-      while with $a=0.9$ twenty-four trades carry the mass of about two. Roll&apos;s estimator
-      itself recovers the spread from exactly this signature, the negative first-order
-      autocovariance of price changes: $s = 2\sqrt{-\mathrm{cov}(\Delta p_t, \Delta p_{t-1})}$.
-      See Roll (1984) in the <a href="./index.html#reading">reading list</a>, and the
-      <a href="./dictionary.html">dictionary</a> for where correlated residuals sit in the
-      mechanics.
+      The same trades, weighed twice. With $a=-0.6$ the total mass is more than triple the naive
+      count $n$. The posterior is far tighter than the iid analysis admits. With $a=0.9$
+      twenty-four trades carry the mass of about two. Roll&apos;s estimator recovers the spread
+      from this same signature, the negative first-order autocovariance of price changes:
+      $s = 2\sqrt{-\mathrm{cov}(\Delta p_t, \Delta p_{t-1})}$. Roll published it in 1984 in the
+      Journal of Finance. See the entry in the <a href="./index.html#reading">reading list</a>,
+      and the <a href="./dictionary.html">dictionary</a> for where correlated residuals sit in
+      the mechanics.
     </p>
   </main>
 

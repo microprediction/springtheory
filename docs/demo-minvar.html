@@ -50,35 +50,36 @@
     <p class="subtitle">Allocation as a bead on a rail; short selling as a repulsive spring.</p>
 
     <p>
-      Hold two assets, fully invested: $w$ in asset 1 and $1-w$ in asset 2, with volatilities
-      $\sigma_1, \sigma_2$ and covariance $c = \rho\,\sigma_1\sigma_2$. Half the portfolio
-      variance decomposes <em>exactly</em> into two spring energies plus a constant that no
-      force ever sees:
+      Harry Markowitz set out mean-variance portfolio selection in 1952, in
+      &ldquo;Portfolio Selection&rdquo; in the Journal of Finance. What follows is that idea in
+      one dimension. Hold two assets, fully invested. Put $w$ in asset 1 and $1-w$ in asset 2,
+      with volatilities $\sigma_1, \sigma_2$ and covariance $c = \rho\,\sigma_1\sigma_2$. Half
+      the portfolio variance splits into two spring energies plus a constant that no force ever
+      sees:
     </p>
     <div class="equation-card">
       $$ \tfrac12\,\mathrm{Var}(w) \;=\;
          \tfrac12\,(\sigma_1^2 - c)\,w^2 \;+\; \tfrac12\,(\sigma_2^2 - c)\,(1-w)^2 \;+\; \tfrac{c}{2}. $$
     </div>
     <p>
-      So the fully-invested portfolio is a <strong>bead on the allocation rail</strong>, tied
-      to the corner portfolio &ldquo;all asset 2&rdquo; ($w=0$) by a spring of stiffness
-      $\sigma_1^2 - c$ and to &ldquo;all asset 1&rdquo; ($w=1$) by one of stiffness
-      $\sigma_2^2 - c$. Release it and it settles at the global minimum-variance weight
-      $w^\ast = (\sigma_2^2 - c)\,/\,(\sigma_1^2 + \sigma_2^2 - 2c)$, the bottom of the
-      variance bowl. Note which way the springs pull: asset $i$&apos;s <em>variance</em> is the
-      stiffness dragging the bead <em>away</em> from it &mdash; risk repels. With uncorrelated
-      assets the equilibrium is $w^\ast = \sigma_2^2/(\sigma_1^2+\sigma_2^2)$, i.e. weights
-      proportional to $1/\sigma_i^2$: inverse-variance weighting, the centre-of-mass rule yet
-      again.
+      So the fully-invested portfolio is a bead on the allocation rail. It is tied to the corner
+      portfolio &ldquo;all asset 2&rdquo; ($w=0$) by a spring of stiffness $\sigma_1^2 - c$, and
+      to &ldquo;all asset 1&rdquo; ($w=1$) by one of stiffness $\sigma_2^2 - c$. Release it and
+      it settles at the global minimum-variance weight
+      $w^\ast = (\sigma_2^2 - c)\,/\,(\sigma_1^2 + \sigma_2^2 - 2c)$, the bottom of the variance
+      bowl. Note which way the springs pull. Asset $i$&apos;s <em>variance</em> is the stiffness
+      dragging the bead away from it. Risk repels. With uncorrelated assets the equilibrium is
+      $w^\ast = \sigma_2^2/(\sigma_1^2+\sigma_2^2)$, so the weights go as $1/\sigma_i^2$. That is
+      inverse-variance weighting, the centre-of-mass rule yet again.
     </p>
     <p>
-      Now <strong>raise the correlation</strong>. Both springs slacken together, and when
-      $c > \sigma_2^2$ (i.e. $\rho > \sigma_2/\sigma_1$) the spring tied to the safer corner
-      turns <strong>repulsive</strong> &mdash; negative stiffness, drawn red &mdash; and the
-      equilibrium is pushed out of $[0,1]$ into the shaded zone: the minimum-variance portfolio
-      <em>shorts</em> the riskier asset. Short selling is not an add-on here; it is what a
-      repulsive spring does. The total stiffness $\sigma_1^2+\sigma_2^2-2c =
-      \mathrm{Var}(r_1 - r_2)$ stays positive, so the bead always settles.
+      Now <em>raise the correlation</em>. Both springs slacken together. When $c > \sigma_2^2$,
+      which is $\rho > \sigma_2/\sigma_1$, the spring tied to the safer corner turns repulsive.
+      Its stiffness is negative, and it is drawn red. The equilibrium is pushed out of $[0,1]$
+      into the shaded zone. There the minimum-variance portfolio <em>shorts</em> the riskier
+      asset. Short selling needs no special rule here. It is what a repulsive spring does. The
+      total stiffness $\sigma_1^2+\sigma_2^2-2c = \mathrm{Var}(r_1 - r_2)$ stays positive, so the
+      bead always settles.
     </p>
 
     <div class="demo-panel">
@@ -105,12 +106,12 @@
 
     <p>
       Two deeper connections. First, the minimum-variance weights are
-      $w^\ast \propto \Sigma^{-1}\mathbf{1}$ &mdash; precision row sums &mdash; which makes the
-      minimum-variance portfolio literally the <strong>GLS estimator of a common mean</strong>:
-      the same masses as the <a href="./demo-roll.html">bid-ask bounce demo</a>, wearing a
-      finance hat. Second, for many assets the corner portfolios become blocks, eliminating a
-      block is a Schur complement, and damping that complement interpolates hierarchical and
-      minimum-variance allocation &mdash; the &gamma;-bridge of
+      $w^\ast \propto \Sigma^{-1}\mathbf{1}$, the precision row sums. That makes the
+      minimum-variance portfolio the <em>GLS estimator of a common mean</em>. It uses the same
+      masses as the <a href="./demo-roll.html">bid-ask bounce demo</a>, wearing a finance hat.
+      Second, for many assets the corner portfolios become blocks. Eliminating a block is a Schur
+      complement. Damping that complement interpolates hierarchical and minimum-variance
+      allocation. That is the &gamma;-bridge of
       <a href="https://schur.microprediction.org">schur.microprediction.org</a>, whose scalar
       shadow is the <a href="./demo-schur-damping.html">Schur damping demo</a>.
     </p>

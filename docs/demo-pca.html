@@ -47,26 +47,25 @@
   <main>
     <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
     <h1>PCA as a rod on sliding collars</h1>
-    <p class="subtitle">Total least squares is the same rod as regression &mdash; with different spring attachments.</p>
+    <p class="subtitle">Total least squares is the same rod as regression, with different spring attachments.</p>
 
     <p>
       In the <a href="./demo-least-squares.html">least squares demo</a> each spring is pinned to
-      the rod directly above its data point, so it stretches <em>vertically</em> and the rod
-      relaxes to the regression line. Attach each spring instead through a
-      <strong>frictionless collar</strong> that slides freely along the rod, and the spring
-      swings perpendicular, storing energy $\tfrac12\sum_i d_i^2$ in the squared
-      <em>orthogonal</em> distances. The resting configuration &mdash; centre at the centroid,
-      axis along the direction of maximal variance &mdash; is the <strong>first principal
-      component</strong>, exactly Pearson&apos;s 1901 &ldquo;line of closest fit.&rdquo;
+      the rod directly above its data point. It stretches <em>vertically</em>, and the rod
+      relaxes to the regression line. Attach each spring instead through a frictionless collar
+      that slides freely along the rod. Now the spring swings perpendicular. It stores energy
+      $\tfrac12\sum_i d_i^2$ in the squared <em>orthogonal</em> distances. The rod settles with
+      its centre at the centroid and its axis along the direction of maximal variance. That is
+      the first principal component. It is Pearson&apos;s 1901 &ldquo;line of closest fit.&rdquo;
     </p>
     <p>
-      The rod&apos;s torque balance is pendulum-like with period $\pi$: there are two
-      equilibria. The first principal component is the stable one; the second is a
-      <strong>balance point</strong> &mdash; try the button that stands the rod on PC2 and watch
-      it teeter before swinging down to PC1, slowly when the cloud is nearly round (weak
-      restoring torque, eigenvalues nearly tied) and violently when it is elongated. Principal
-      components are the normal modes of the point cloud; eigenvalues are their stiffnesses.
-      <strong>Drag points</strong>, reshape the cloud with the sliders, or spin the rod.
+      The rod&apos;s torque balance is pendulum-like with period $\pi$. There are two equilibria.
+      The first principal component is the stable one. The second is a balance point. Try the
+      button that stands the rod on PC2 and watch it teeter before swinging down to PC1. It falls
+      slowly when the cloud is nearly round, because the restoring torque is weak and the
+      eigenvalues are nearly tied. It falls violently when the cloud is elongated. Principal
+      components are the normal modes of the point cloud. Eigenvalues are their stiffnesses.
+      <em>Drag points</em>, reshape the cloud with the sliders, or spin the rod.
     </p>
 
     <div class="demo-panel">
@@ -91,12 +90,14 @@
     </div>
 
     <p>
-      Vertical springs give regression; sliding collars give PCA; and a spring with anisotropic
-      stiffness would interpolate the two (errors-in-variables). The energy here is the
-      negative log-likelihood of an isotropic Gaussian around the line, which is why the collar
-      construction finds the top eigenvector of the covariance &mdash; and why, for a nearly
-      round cloud, the axis is barely identified: the bowl is nearly flat in $\theta$ and the
-      rod wanders. See Pearson (1901) in the <a href="./index.html#reading">reading list</a>.
+      Vertical springs give regression. Sliding collars give PCA. A spring with anisotropic
+      stiffness would interpolate the two, the errors-in-variables case. The energy here is the
+      negative log-likelihood of an isotropic Gaussian around the line. That is why the collar
+      construction finds the top eigenvector of the covariance. It is also why a nearly round
+      cloud barely fixes the axis. The bowl is nearly flat in $\theta$, and the rod wanders.
+      Pearson set this down in 1901. Harold Hotelling carried the method further and named the
+      principal components in 1933. See Pearson (1901) in the
+      <a href="./index.html#reading">reading list</a>.
     </p>
   </main>
 

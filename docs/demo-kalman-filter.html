@@ -47,26 +47,26 @@
   <main>
     <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
     <h1>The filter through time</h1>
-    <p class="subtitle">One body, waxing and waning: the Kalman filter as it actually runs, tick by tick.</p>
+    <p class="subtitle">One body waxing and waning, the Kalman filter as it runs, tick by tick.</p>
 
     <p>
-      The <a href="./index.html">smoother</a> relaxes an entire path at once. The
-      <strong>filter</strong> is more like a single body of evolving mass, alternating the two
-      moves from the <a href="./intro.html">introduction</a> as time advances. Each tick:
+      The <a href="./index.html">smoother</a> relaxes an entire path at once. The filter is more
+      like a single body of evolving mass. It alternates the two moves from the
+      <a href="./intro.html">introduction</a> as time advances. Each tick:
     </p>
     <ol>
-      <li><strong>Predict.</strong> The belief chains through a process-noise spring of
-        stiffness $q = 1/Q$ &mdash; a series composition, so the mass <em>shrinks</em>:
-        $\pi_{\text{pred}} = \pi q/(\pi+q)$, mean unchanged. Watch the body deflate.</li>
-      <li><strong>Update.</strong> If an observation of mass $r=1/R$ arrives, it fuses in
-        parallel &mdash; masses add, $\pi' = \pi_{\text{pred}} + r$ &mdash; and the body
-        relaxes to the new centre of mass. Watch it re-inflate and slide.</li>
+      <li><em>Predict.</em> The belief chains through a process-noise spring of stiffness
+        $q = 1/Q$. This is a series composition, so the mass shrinks to
+        $\pi_{\text{pred}} = \pi q/(\pi+q)$ with the mean unchanged. Watch the body deflate.</li>
+      <li><em>Update.</em> If an observation of mass $r=1/R$ arrives, it fuses in parallel. The
+        masses add, $\pi' = \pi_{\text{pred}} + r$, and the body relaxes to the new centre of
+        mass. Watch it re-inflate and slide.</li>
     </ol>
     <p>
-      Skip an observation and the body just keeps shrinking, unchecked &mdash; staleness with
-      nothing to arrest it. <strong>Play</strong> to watch the filter run, or <strong>Step</strong>
-      one tick at a time. The dashed grey line is the true hidden path; dots are observations
-      (some withheld, per the slider); the solid line is the trail of filtered means.
+      Skip an observation and the body just keeps shrinking. Nothing arrests the staleness. Play
+      to watch the filter run, or Step one tick at a time. The dashed grey line is the true hidden
+      path. The dots are observations, some withheld according to the slider. The solid line is
+      the trail of filtered means.
     </p>
 
     <div class="demo-panel">
@@ -93,11 +93,16 @@
     </div>
 
     <p>
-      Filtering is exactly this alternation, run left to right once. Smoothing (the
-      <a href="./index.html">landing-page demo</a>) is what happens if, having reached the end,
-      you let the <em>whole chain</em> relax again with every link present at once &mdash;
-      future evidence now pulls on the past too. Same two moves, same springs; the only
-      difference is whether the chain gets to see its own future before settling.
+      Filtering is this alternation, run left to right once. Smoothing is what happens next.
+      Having reached the end, you let the whole chain relax again with every link present at once,
+      so future evidence pulls on the past too. The two moves and the springs are the same. The
+      only difference is whether the chain gets to see its own future before settling. The
+      <a href="./index.html">landing-page demo</a> shows the smoother.
+    </p>
+    <p>
+      Kalman&apos;s recursion left the page quickly. He took it to NASA&apos;s Ames Research
+      Center in 1960, where Stanley Schmidt saw that it fitted the midcourse navigation problem
+      for Apollo and reworked it for the nonlinear case. That version flew to the Moon.
     </p>
   </main>
 

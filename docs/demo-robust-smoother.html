@@ -51,8 +51,8 @@
 
     <p>
       The <a href="./index.html">smoother</a>&apos;s measurement spring has energy
-      $\tfrac12\phi(x_t-y_t)^2$ &mdash; a fixed shape, quadratic. Generalise it to a
-      <strong>power law</strong>,
+      $\tfrac12\phi(x_t-y_t)^2$. The shape is fixed and quadratic. Generalise it to a
+      <em>power law</em>,
     </p>
     <div class="equation-card">
       $$ E \;=\; \sum_t \frac{\phi}{p}\,|x_t - y_t|^p \;+\; \sum_t \tfrac12\,q\,(x_{t+1}-x_t)^2,
@@ -60,22 +60,21 @@
          F_{\text{meas}}(t) \;=\; \phi\,\mathrm{sign}(y_t-x_t)\,|y_t-x_t|^{p-1}. $$
     </div>
     <p>
-      At $p=2$ the force is $\phi(y_t-x_t)$: an ordinary Hookean spring, pull growing
-      <em>linearly</em> with the residual &mdash; the Kalman smoother, exactly as before. At
-      $p=1$ the force is $\phi\,\mathrm{sign}(y_t-x_t)$: <strong>constant magnitude</strong>,
-      regardless of how far off $y_t$ is &mdash; the same constant-tension device as the
-      <a href="./demo-lasso.html">Lasso demo</a>&apos;s pulley, and it makes each bead settle
-      at the (process-weighted) <strong>median</strong> of its neighbours and its own
-      observation. Between $1$ and $2$, the influence function $|r|^{p-1}$ grows
-      <strong>sub-linearly</strong> in the residual $r$ &mdash; a continuous dial between the
-      two.
+      At $p=2$ the force is $\phi(y_t-x_t)$. This is an ordinary Hookean spring, its pull
+      growing <em>linearly</em> with the residual. That gives the Kalman smoother, as before. At
+      $p=1$ the force is $\phi\,\mathrm{sign}(y_t-x_t)$. The magnitude is constant, whatever the
+      size of the residual. It is the same constant-tension device as the
+      <a href="./demo-lasso.html">Lasso demo</a>&apos;s pulley. Each bead settles at the
+      process-weighted <em>median</em> of its neighbours and its own observation. Between $1$
+      and $2$ the influence function $|r|^{p-1}$ grows sub-linearly in the residual $r$. The
+      exponent is a continuous dial between the two.
     </p>
     <p>
-      Point 4 below is a planted outlier. <strong>Drag $p$ from $2$ down to $1$</strong> and
-      watch the green (live) curve peel away from the grey dashed line &mdash; the ordinary
-      Kalman fit, which the outlier drags noticeably &mdash; while the green curve near that
-      point barely moves once $p$ nears $1$: its influence has saturated. Drag any point
-      yourself to plant a bigger or smaller outlier and see the gap widen or close.
+      Point 4 below is a planted outlier. <em>Drag $p$ from $2$ down to $1$</em> and watch the
+      green curve peel away from the grey dashed line. The dashed line is the ordinary Kalman
+      fit, and the outlier drags it noticeably. The green curve near that point barely moves
+      once $p$ nears $1$. Its influence has saturated. Drag any point yourself to plant a
+      bigger or smaller outlier and see the gap widen or close.
     </p>
 
     <div class="demo-panel">
@@ -99,12 +98,14 @@
     </div>
 
     <p>
-      This is exactly the &ldquo;sub-linear gain&rdquo; framing of robust M-estimation: the
-      <em>influence function</em> $\psi(r)=|r|^{p-1}\mathrm{sign}(r)$ is linear (unbounded
-      influence) at $p=2$ and constant (bounded influence) at $p=1$. The
-      <a href="./demo-huber.html">Huber loss demo</a> takes the other common route to the same
-      place &mdash; keep the spring exactly quadratic near zero, but cap its force beyond a
-      threshold &mdash; rather than reshaping the whole curve.
+      This is the &ldquo;sub-linear gain&rdquo; framing of robust M-estimation. The
+      <em>influence function</em> $\psi(r)=|r|^{p-1}\mathrm{sign}(r)$ is linear at $p=2$, so a
+      point&apos;s influence is unbounded. At $p=1$ it is constant, so influence is bounded.
+      The $p=1$ end is old. Boscovich fitted by least absolute deviations in 1757, working on
+      the shape of the earth, and Laplace took up the method soon after. Minimising absolute
+      error lands on the median. The <a href="./demo-huber.html">Huber loss demo</a> takes the
+      other common route to the same place. It keeps the spring quadratic near zero and caps
+      its force beyond a threshold, rather than reshaping the whole curve.
     </p>
   </main>
 

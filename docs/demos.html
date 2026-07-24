@@ -46,96 +46,95 @@
     <p class="subtitle">Exact physical analogies only.</p>
 
     <p>
-      Every demo is an <strong>exact</strong> physical analog, not an illustration: the
-      idealised mechanism&apos;s potential energy equals the negative log posterior term for
-      term, so its equilibrium <em>is</em> the estimator. Each page draws the closed-form
-      answer dashed alongside the simulation so you can watch the physics land on it.
+      Every demo is an exact physical analog. The idealised mechanism has a potential energy
+      that equals the negative log posterior term for term. So its equilibrium <em>is</em> the
+      estimator. Each page draws the closed-form answer dashed alongside the simulation. You can
+      watch the physics land on it.
     </p>
 
     <ul>
       <li>
-        <a href="./demo-fusion.html"><strong>Evidence fusion</strong></a> &mdash; a prior and any
-        number of observations hang on a test particle; the particle relaxes to the posterior
-        mean and the total mass is the posterior precision. Add observations one at a time and
-        watch equilibrium re-form; slacken the observation channel with the &rho; dial to see the
+        <a href="./demo-fusion.html"><em>Evidence fusion</em></a>. A prior and any number of
+        observations hang on a test particle. The particle relaxes to the posterior mean. The
+        total mass is the posterior precision. Add observations one at a time and watch
+        equilibrium re-form. Slacken the observation channel with the &rho; dial to see the
         reduced-mass rule at work.
       </li>
       <li>
-        <a href="./demo-reduced-mass.html"><strong>Reduced mass</strong></a> &mdash; a
-        hierarchical chain (observation, latent joint, particle) above its consolidated
-        equivalent: a single body carrying the reduced mass &phi;&rho;/(&phi;+&rho;). Both
-        settle on the same line; slacken the channel and watch the evidence&apos;s weight drain
-        away.
+        <a href="./demo-reduced-mass.html"><em>Reduced mass</em></a>. A hierarchical chain sits
+        above its consolidated equivalent. The chain runs from observation through a latent joint
+        to the particle. The equivalent is a single body carrying the reduced mass
+        &phi;&rho;/(&phi;+&rho;). Both settle on the same line. Slacken the channel and watch the
+        evidence&apos;s weight drain away.
       </li>
       <li>
-        <a href="./demo-kalman-filter.html"><strong>The filter through time</strong></a>
-        &mdash; one body of evolving mass, alternating predict (mass shrinks through a series
-        spring) and update (mass grows by fusion) tick by tick. Play it, or step through by
-        hand; skip observations and watch staleness go unchecked.
+        <a href="./demo-kalman-filter.html"><em>The filter through time</em></a>. One body of
+        evolving mass. It alternates predict and update, tick by tick. Predict shrinks the mass
+        through a series spring. Update grows it by fusion. Play it, or step through by hand.
+        Skip observations and watch staleness go unchecked.
       </li>
       <li>
-        <a href="./demo-graph.html"><strong>Conditioning a Gaussian graph</strong></a> &mdash;
-        six beads on a chain plus a non-local shortcut edge. Pin any node and the rest relax
-        into the exact conditional mean &mdash; a Schur complement of the graph&apos;s
-        precision matrix, propagating along every path, not just to nearest neighbours.
+        <a href="./demo-graph.html"><em>Conditioning a Gaussian graph</em></a>. Six beads on a
+        chain plus a non-local shortcut edge. Pin any node and the rest relax into the exact
+        conditional mean. That mean is a Schur complement of the graph&apos;s precision matrix.
+        It propagates along every path, not only to nearest neighbours.
       </li>
       <li>
-        <a href="./demo-schur-damping.html"><strong>Schur damping</strong></a> &mdash;
-        eliminating the chain&apos;s free joint is a scalar Schur complement; the &gamma; dial
-        keeps only a fraction of the joint&apos;s recoil, sliding between clamped-to-the-data
-        overconfidence (&gamma;=0) and the exact marginal (&gamma;=1). The allocation version
-        of the same dial lives at
-        <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
+        <a href="./demo-schur-damping.html"><em>Schur damping</em></a>. Eliminating the
+        chain&apos;s free joint is a scalar Schur complement. The &gamma; dial keeps only a
+        fraction of the joint&apos;s recoil. It slides between clamped-to-the-data overconfidence
+        at &gamma;=0 and the exact marginal at &gamma;=1. The allocation version of the same dial
+        lives at <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
       </li>
       <li>
-        <a href="./demo-least-squares.html"><strong>Least squares as springs</strong></a>
-        &mdash; a rigid rod tied by vertical springs to draggable data points relaxes to the
-        ordinary least squares line, after
-        <a href="https://joshualoftus.com/about.html">Joshua Loftus</a>.
+        <a href="./demo-least-squares.html"><em>Least squares as springs</em></a>. A rigid rod
+        tied by vertical springs to draggable data points relaxes to the ordinary least squares
+        line, after <a href="https://joshualoftus.com/about.html">Joshua Loftus</a>.
       </li>
       <li>
-        <a href="./demo-smoother.html"><strong>The time-series smoother</strong></a> &mdash; a
-        bead chain (measurement springs down to the data, process-noise springs between
-        neighbours) relaxes to the Kalman smoother of a local-level model, alias
-        Whittaker&ndash;Henderson graduation. Add an observation and watch the whole posterior
-        path re-equilibrate.
+        <a href="./demo-smoother.html"><em>The time-series smoother</em></a>. A bead chain
+        relaxes to the Kalman smoother of a local-level model. Measurement springs pull down to
+        the data. Process-noise springs run between neighbours. The method also goes by
+        Whittaker-Henderson graduation. Add an observation and watch the whole posterior path
+        re-equilibrate.
       </li>
       <li>
-        <a href="./demo-robust-smoother.html"><strong>Robust smoothing: median vs Kalman</strong></a>
-        &mdash; the same bead chain, but the measurement springs are reshaped by an exponent
-        dial. At $p=2$ it is the Kalman smoother; slide toward $p=1$ and each spring becomes a
-        constant-tension pull, so the path relaxes to a running median that shrugs off spikes.
+        <a href="./demo-robust-smoother.html"><em>Robust smoothing: median vs Kalman</em></a>.
+        The same bead chain, with the measurement springs reshaped by an exponent dial. At $p=2$
+        it is the Kalman smoother. Slide toward $p=1$ and each spring becomes a constant-tension
+        pull. The path then relaxes to a running median that shrugs off spikes.
       </li>
       <li>
-        <a href="./demo-huber.html"><strong>Huber loss</strong></a> &mdash; five points on three
-        rails share one parameter. L2 is a plain spring (mean), L1 a constant-tension pulley
-        (median), and Huber a spring that switches to a capped pull past a threshold $\delta$.
-        Drag the outlier and watch the mean chase it, the median ignore it, and Huber compromise.
+        <a href="./demo-huber.html"><em>Huber loss</em></a>. Five points on three rails share one
+        parameter. L2 is a plain spring and gives the mean. L1 is a constant-tension pulley and
+        gives the median. Huber is a spring that switches to a capped pull past a threshold
+        $\delta$. Drag the outlier. The mean chases it, the median ignores it, and Huber lands in
+        between.
       </li>
       <li>
-        <a href="./demo-roll.html"><strong>Bid-ask bounce</strong></a> &mdash; a Gaussian Roll
-        model: trades with negatively autocorrelated errors are <em>anti-redundant</em>
-        evidence. The GLS weights are precision row sums, so bouncing prices carry more mass
-        than their naive iid weight &mdash; and stale, positively correlated ones far less.
+        <a href="./demo-roll.html"><em>Bid-ask bounce</em></a>. A Gaussian Roll model. Trades
+        with negatively autocorrelated errors are <em>anti-redundant</em> evidence. The GLS
+        weights are precision row sums. So bouncing prices carry more mass than their naive iid
+        weight. Stale, positively correlated ones carry far less.
       </li>
       <li>
-        <a href="./demo-minvar.html"><strong>The minimum-variance portfolio</strong></a>
-        &mdash; a bead on the allocation rail, tied to the corner portfolios by springs of
-        stiffness &sigma;&sup2;&minus;c. Raise the correlation and a spring turns repulsive:
-        short selling emerges mechanically. Min-var weights are precision row sums &mdash; the
-        GLS estimator of a common mean in a finance hat.
+        <a href="./demo-minvar.html"><em>The minimum-variance portfolio</em></a>. A bead on the
+        allocation rail, tied to the corner portfolios by springs of stiffness
+        &sigma;&sup2;&minus;c. Raise the correlation and a spring turns repulsive. Short selling
+        emerges mechanically. Min-var weights are precision row sums. They are the GLS estimator
+        of a common mean in a finance hat.
       </li>
       <li>
-        <a href="./demo-pca.html"><strong>PCA as a rod on sliding collars</strong></a> &mdash;
-        attach the regression rod&apos;s springs through frictionless collars and they pull
-        perpendicular: the rod relaxes to the first principal component, and balances unstably
-        on the second. Pearson&apos;s 1901 &ldquo;line of closest fit,&rdquo; literally.
+        <a href="./demo-pca.html"><em>PCA as a rod on sliding collars</em></a>. Attach the
+        regression rod&apos;s springs through frictionless collars and they pull perpendicular.
+        The rod relaxes to the first principal component. It balances unstably on the second.
+        This is Pearson&apos;s 1901 &ldquo;line of closest fit,&rdquo; literally.
       </li>
       <li>
-        <a href="./demo-lasso.html"><strong>Ridge vs Lasso</strong></a> &mdash; where the
-        Hookean analogy breaks, on purpose. Ridge is an ordinary spring to zero; Lasso swaps it
-        for a constant-tension pulley, and once the data spring&apos;s pull weakens below the
-        tension the bead sticks at exactly zero &mdash; soft-thresholding, mechanically.
+        <a href="./demo-lasso.html"><em>Ridge vs Lasso</em></a>. Where the Hookean analogy
+        breaks, on purpose. Ridge is an ordinary spring to zero. Lasso swaps it for a
+        constant-tension pulley. Once the data spring&apos;s pull weakens below the tension the
+        bead sticks at zero. That is soft-thresholding, done mechanically.
       </li>
     </ul>
 

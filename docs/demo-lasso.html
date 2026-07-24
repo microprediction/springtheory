@@ -47,28 +47,31 @@
   <main>
     <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
     <h1>Ridge vs Lasso</h1>
-    <p class="subtitle">Where the Hookean analogy breaks, on purpose &mdash; and why that break gives you exact zeros.</p>
+    <p class="subtitle">Where the Hookean analogy breaks, and why the break gives you exact zeros.</p>
 
     <p>
-      Shrink a single noisy estimate $y$ (mass $\phi$) toward zero and you get two textbook
-      estimators depending on the shape of the penalty. Both are &ldquo;a device pulling the
-      bead toward the origin&rdquo;; they differ in what kind of device.
+      Take a single noisy estimate $y$ of mass $\phi$ and shrink it toward zero. Which estimator
+      you get depends on the shape of the penalty. There are two textbook choices. Both are a
+      device pulling the bead toward the origin. They differ in what kind of device.
     </p>
     <p>
-      <strong>Ridge</strong> is an ordinary Hookean spring of stiffness $\lambda$ anchored at
-      $0$: force $-\lambda z$, energy $\tfrac12\lambda z^2$. Its pull weakens as the bead nears
-      zero, so equilibrium $z^\ast_{\text{ridge}} = \phi y/(\phi+\lambda)$ approaches zero only
-      in the limit $\lambda \to \infty$ &mdash; shrinkage, never exact sparsity.
+      <em>Ridge</em> is an ordinary Hookean spring of stiffness $\lambda$ anchored at $0$. Its
+      force is $-\lambda z$ and its energy is $\tfrac12\lambda z^2$. The pull weakens as the bead
+      nears zero. So the equilibrium $z^\ast_{\text{ridge}} = \phi y/(\phi+\lambda)$ approaches
+      zero only in the limit $\lambda \to \infty$. That is shrinkage, never sparsity. Hoerl and
+      Kennard gave the method its name in 1970, in a paper on steadying least squares when the
+      predictors are collinear.
     </p>
     <p>
-      <strong>Lasso</strong> replaces the spring with a <em>constant-tension</em> device
-      &mdash; mechanically, a cable over a pulley with a hanging weight $\lambda$, always
-      pulling toward $0$ with the <em>same</em> force regardless of distance. Its potential is
-      the cone $\lambda|z|$, non-Hookean precisely at the kink the
-      <a href="./intro.html">introduction&apos;s caveat</a> warns about. Once the data-spring&apos;s
-      pull weakens below $\lambda$, the constant-tension device wins outright and the bead
-      sticks at exactly zero: $z^\ast_{\text{lasso}} = \mathrm{sign}(y)\max(|y| - \lambda/\phi,\, 0)$
-      &mdash; soft-thresholding.
+      <em>Lasso</em> replaces the spring with a constant-tension device. Mechanically it is a
+      cable over a pulley with a hanging weight $\lambda$. It always pulls toward $0$ with the
+      same force regardless of distance. Its potential is the cone $\lambda|z|$, non-Hookean at
+      the kink the <a href="./intro.html">introduction&apos;s caveat</a> warns about. Once the
+      data-spring&apos;s pull weakens below $\lambda$ the constant-tension device wins outright.
+      The bead sticks at zero. The estimate is
+      $z^\ast_{\text{lasso}} = \mathrm{sign}(y)\max(|y| - \lambda/\phi,\, 0)$, which is
+      soft-thresholding. Tibshirani named the lasso in 1996 and showed that the $L_1$ penalty is
+      what drives coefficients to zero.
     </p>
 
     <div class="demo-panel">
@@ -92,21 +95,20 @@
     </div>
 
     <p>
-      <strong>Raise $\lambda$ past $\phi|y|$</strong> and watch: the ridge bead keeps sliding,
-      slowing down but always moving; the lasso bead stops dead at $0$ and stays there for
-      every larger $\lambda$ &mdash; the shaded dead zone on its rail. This one demo&apos;s
-      simulation is honestly not raw $F=ma$: the kink at $z=0$ makes naive force integration
-      chatter, so the lasso bead is animated via <em>proximal gradient flow</em> (an exact
-      implicit step through the kink each frame) rather than the site&apos;s usual damped
-      spring integrator. The equilibrium it lands on is exactly the one above &mdash; only the
-      transient&apos;s telling is different.
+      Raise $\lambda$ past $\phi|y|$ and watch. The ridge bead keeps sliding. It slows down but
+      always moves. The lasso bead stops dead at $0$ and stays there for every larger $\lambda$.
+      That is the shaded dead zone on its rail. This one demo does not run on raw $F=ma$. The
+      kink at $z=0$ makes naive force integration chatter. So the lasso bead is animated by
+      <em>proximal gradient flow</em> rather than the site&apos;s usual damped spring integrator.
+      That is an exact implicit step through the kink each frame. The equilibrium it lands on is
+      the one above. Only the telling of the transient differs.
     </p>
     <p>
-      The <a href="./dictionary.html">dictionary</a> calls Gaussian priors Hookean for a
-      reason: a Laplace prior on $z$ is exactly what makes the penalty $\lambda|z|$, and its
-      density has a corner at zero that a Gaussian&apos;s never does. Every other demo on this
-      site works because the log-density is a parabola everywhere; this is the one demo about
-      what happens the moment it isn&apos;t.
+      The <a href="./dictionary.html">dictionary</a> calls Gaussian priors Hookean for a reason.
+      A Laplace prior on $z$ is what gives the penalty $\lambda|z|$. Its density has a corner at
+      zero that a Gaussian&apos;s never does. Every other demo on this site works because the
+      log-density is a parabola everywhere. This is the one demo about what happens when it is
+      not.
     </p>
   </main>
 

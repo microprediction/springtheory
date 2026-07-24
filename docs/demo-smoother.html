@@ -50,32 +50,32 @@
     <p class="subtitle">A whole posterior path finding equilibrium at once.</p>
 
     <p>
-      The local-level model &mdash; a random-walk state observed in noise,
-      $x_{t+1} = x_t + \mathcal{N}(0, q^{-1})$, $y_t = x_t + \mathcal{N}(0, r^{-1})$ &mdash;
-      is a <strong>bead chain</strong>. Each green bead $x_t$ rides a frictionless vertical rod
-      at its time slot, hangs from its observation by a measurement spring of stiffness $r$,
-      and is tied to its neighbours by process-noise springs of stiffness $q$. The rods stop
-      the chain contracting sideways, and because the springs have zero natural length the
-      diagonal neighbour spring&apos;s energy splits into a constant plus
-      $\tfrac12 q (x_{t+1}-x_t)^2$, so the energy is &mdash; exactly &mdash; the negative log
-      posterior of the whole path,
+      The local-level model is a bead chain. It is a random-walk state observed in noise,
+      $x_{t+1} = x_t + \mathcal{N}(0, q^{-1})$, $y_t = x_t + \mathcal{N}(0, r^{-1})$.
+      Each green bead $x_t$ rides a frictionless vertical rod at its time slot. It hangs from
+      its observation by a measurement spring of stiffness $r$, and is tied to its neighbours
+      by process-noise springs of stiffness $q$. The rods stop the chain contracting sideways.
+      The springs have zero natural length, so the diagonal neighbour spring&apos;s energy
+      splits into a constant plus $\tfrac12 q (x_{t+1}-x_t)^2$. The energy is then the negative
+      log posterior of the whole path,
     </p>
     <div class="equation-card">
       $$ E \;=\; \tfrac12 \sum_t r\,(x_t - y_t)^2 \;+\; \tfrac12 \sum_t q\,(x_{t+1} - x_t)^2, $$
     </div>
     <p>
-      so the chain&apos;s resting shape is the <strong>Kalman smoother</strong> &mdash; equally,
-      Whittaker&ndash;Henderson graduation with a first-difference penalty, the
-      Hodrick&ndash;Prescott filter&apos;s older sibling. The dashed curve is the exact smoother
-      from a tridiagonal solve; the beads just obey $F = ma$.
+      so the chain&apos;s resting shape is the <em>Kalman smoother</em>. It is equally
+      Whittaker-Henderson graduation with a first-difference penalty. Whittaker published this
+      method in 1923 to smooth mortality tables. Economists rediscovered the same penalty
+      decades later as the Hodrick-Prescott filter. The dashed curve is the exact smoother from
+      a tridiagonal solve. The beads just obey $F = ma$.
     </p>
     <p>
-      <strong>Stiffen the chain</strong> and it pulls taut toward a constant (all evidence
-      pooled); slacken it and each bead chases its own observation. <strong>Drag an
-      observation</strong> and watch the disturbance propagate a few springs down the chain and
-      die out &mdash; the smoother&apos;s influence is local, which is why filtering and
-      smoothing agree except near the ends. Most fun: <strong>add an observation</strong> and
-      watch the whole posterior path re-equilibrate to accommodate it.
+      <em>Stiffen the chain</em> and it pulls taut toward a constant. All the evidence is
+      pooled. Slacken it and each bead chases its own observation. <em>Drag an observation</em>
+      and the disturbance propagates a few springs down the chain and dies out. The
+      smoother&apos;s influence is local. That is why filtering and smoothing agree except near
+      the ends. <em>Add an observation</em> and the whole posterior path re-equilibrates to
+      accommodate it.
     </p>
 
     <div class="demo-panel">
@@ -100,11 +100,11 @@
 
     <p>
       In the language of the <a href="./intro.html">introduction</a>, each link of the chain is
-      one series spring &mdash; the prediction step bleeding precision &mdash; and each
-      measurement spring adds its mass in parallel. Run along the chain left to right doing
-      those two moves and you have the Kalman <em>filter</em>; let the whole chain relax at once
-      and you have the <em>smoother</em>. Same springs, different questions. Pin part of the
-      chain and you are conditioning &mdash; a Schur complement, as at
+      one series spring. It is the prediction step bleeding precision. Each measurement spring
+      adds its mass in parallel. Run along the chain left to right doing those two moves and you
+      have the Kalman <em>filter</em>. Let the whole chain relax at once and you have the
+      <em>smoother</em>. Same springs, different questions. Pin part of the chain and you are
+      conditioning. That is a Schur complement, as at
       <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
     </p>
   </main>

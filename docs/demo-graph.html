@@ -50,41 +50,38 @@
     <p class="subtitle">Pin a node, and a Schur complement ripples through the network.</p>
 
     <p class="lead">
-      <strong>The point:</strong> fixing a variable in a multivariate Gaussian at a known value
-      and asking what the others&apos; new mean is &mdash; <em>conditioning</em> &mdash; is
-      exactly the same operation as taking a <strong>Schur complement</strong> of the precision
-      matrix. Below, that operation is a spring network: pin a bead at a value, let go, and
-      wherever the rest of the network comes to rest <em>is</em> the conditional mean. No
-      matrix algebra is running &mdash; the springs are doing the elimination.
+      Fix a variable in a multivariate Gaussian at a known value and ask where the mean of the
+      others moves to. That is <em>conditioning</em>. It is the same operation as taking a Schur
+      complement of the precision matrix. Below, the operation is a spring network. Pin a bead at
+      a value, let go, and the rest of the network settles at the conditional mean. No matrix
+      algebra runs here. The springs do the elimination.
     </p>
 
     <p>
-      Six beads on frictionless vertical rods, joined by springs along a chain &mdash; plus one
-      <strong>shortcut edge</strong> from node 1 to node 4. Both ends (0 and 5) start pinned
-      (red), so the four beads in between are already showing you a real conditional mean, not
-      an arbitrary resting point. <strong>Drag any bead</strong> and it pins wherever you drop
-      it &mdash; that is you asserting a new conditioning value. <strong>Tap a bead</strong>
-      without dragging to unpin it (or pin it in place); <strong>Unpin all</strong> releases
-      every constraint, and the whole network relaxes toward the faint dashed
-      &ldquo;flat prior&rdquo; line &mdash; a very weak default belief every node has, needed
-      only so the system has a well-defined rest state when nothing else is fixed.
+      Six beads sit on frictionless vertical rods, joined by springs along a chain. One shortcut
+      edge runs from node 1 to node 4. Both ends, 0 and 5, start pinned in red. So the four beads
+      between them already show a real conditional mean, not just wherever they happened to start.
+      Drag any bead and it pins wherever you drop it. That is you asserting a new conditioning
+      value. Tap a bead without dragging to unpin it, or to pin it in place. Unpin all releases
+      every constraint, and the network relaxes toward the faint dashed &ldquo;flat prior&rdquo;
+      line. That line is a weak default belief every node carries. It is there so the system has
+      a well-defined rest state when nothing else is fixed.
     </p>
     <p>
-      With both ends still pinned, watch node 2 in the middle as you drag node 0: it moves
-      &mdash; correlation propagates along every path, attenuated by distance and by the
-      shortcut. Now pin node 1 and drag it: node 4 twitches immediately, skipping straight past
-      nodes 2 and 3 &mdash; conditioning on a graph is not local the way the
-      <a href="./index.html">chain smoother</a> was, where influence only ever passed to an
-      immediate neighbour.
+      Keep both ends pinned and watch node 2 as you drag node 0. It moves. Correlation propagates
+      along every path, attenuated by distance and by the shortcut. Now pin node 1 and drag it.
+      Node 4 twitches at once, skipping past nodes 2 and 3. Conditioning on a graph is not local
+      the way the <a href="./index.html">chain smoother</a> was. There, influence only ever passed
+      to an immediate neighbour.
     </p>
     <p>
-      Switch to the <strong>star</strong> topology and the same mechanics tell a
-      <strong>collaborative</strong> story: node 0 is a shared hub, and nodes 1&ndash;5 are five
-      independent observers, each with their own spring of stiffness $\phi_i$ to the hub. Two
-      spokes start pinned at different values, and the hub already sits at their
-      precision-weighted average &mdash; the <a href="./demo-fusion.html">fusion demo</a>,
-      generalised to five voices instead of two. Pin a third spoke, or unpin one mid-way
-      through, and watch the consensus shift as that vote is added or withdrawn.
+      Switch to the star topology and the same mechanics tell a collaborative story. Node 0 is a
+      shared hub. The other five nodes are independent observers, each tied to the hub by its own
+      spring of stiffness $\phi_i$. Two spokes start pinned at different values, and the hub
+      already sits at their precision-weighted average. This is the
+      <a href="./demo-fusion.html">fusion demo</a> generalised to five voices instead of two. Pin
+      a third spoke, or unpin one partway through, and the consensus shifts as that vote is added
+      or withdrawn.
     </p>
 
     <div class="demo-panel">
@@ -111,10 +108,13 @@
 
     <p>
       This is the multivariate generalisation the <a href="./intro.html">introduction</a>
-      promises in step 6: &ldquo;pinning part of a spring network to the wall&rdquo; is a Schur
-      complement of the joint precision matrix, and the sister site
+      promises in step 6. Pinning part of a spring network to the wall is a Schur complement of
+      the joint precision matrix. Arthur Dempster gave this structure its statistical name in
+      1972, in a paper called covariance selection. He showed that a zero in the precision matrix
+      means two variables are independent once you condition on all the rest. The graph of the
+      nonzero entries is the graph you are dragging here. The sister site
       <a href="https://schur.microprediction.org">schur.microprediction.org</a> works out the
-      block version of exactly this move for hierarchical portfolio allocation.
+      block version of the same move for hierarchical portfolio allocation.
     </p>
   </main>
 

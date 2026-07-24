@@ -50,10 +50,12 @@
     <p class="subtitle">How far do you trust a floating joint&apos;s recoil?</p>
 
     <p>
-      Eliminating the free joint from the <a href="./demo-reduced-mass.html">reduced mass
-      demo</a>&apos;s chain is a genuine <strong>Schur complement</strong>. The joint
-      energy&apos;s Hessian in (particle $z$, joint $w$) is the precision matrix, and
-      minimising out $w$ takes the Schur complement of the $w$ block:
+      Eliminating the free joint from the chain in the
+      <a href="./demo-reduced-mass.html">reduced mass demo</a> is a genuine Schur complement. The
+      energy&apos;s Hessian in the particle $z$ and the joint $w$ is the precision matrix.
+      Minimising out $w$ takes the Schur complement of the $w$ block. Issai Schur wrote the
+      determinant identity behind this in 1917. Emilie Haynsworth attached his name to the
+      operation in 1968.
     </p>
     <div class="equation-card">
       $$ \Lambda = \begin{pmatrix} p+\rho & -\rho \\ -\rho & \rho+\phi \end{pmatrix},
@@ -62,30 +64,30 @@
          \;=\; p \;+\; \underbrace{\frac{\phi\rho}{\phi+\rho}}_{S(1)} . $$
     </div>
     <p>
-      The prior&apos;s $p$ rides through untouched, so the particle&apos;s effective stiffness
-      toward the observation is $S(1) = \rho - \rho^2/(\rho+\phi)$: the channel stiffness minus
-      a correction fed back by the joint&apos;s recoil. <strong>Schur damping</strong> keeps
-      only a fraction $\gamma$ of that correction,
+      The prior&apos;s $p$ rides through untouched. So the particle&apos;s effective stiffness
+      toward the observation is $S(1) = \rho - \rho^2/(\rho+\phi)$. That is the channel stiffness
+      minus a correction fed back by the joint&apos;s recoil. Schur damping keeps only a fraction
+      $\gamma$ of that correction,
     </p>
     <div class="equation-card">
       $$ S(\gamma) \;=\; \rho \;-\; \gamma\,\frac{\rho^2}{\rho+\phi}, $$
     </div>
     <p>
       and the dial has a mechanical reading. At $\gamma = 1$ the joint floats free and the
-      particle feels the exact marginal &mdash; the reduced mass. At $\gamma = 0$ the joint is
-      <strong>clamped to the data</strong>: the particle inherits the channel&apos;s full
-      stiffness $\rho$ and is pulled hard toward $y$, overconfident because the joint&apos;s
-      own uncertainty has been ignored. Interior $\gamma$ trusts the recoil partially &mdash;
-      the right posture when the coupling $\rho$ is estimated rather than known. The same dial,
-      damping the off-diagonal feedback of a partitioned precision matrix, interpolates
-      hierarchical and optimisation-based portfolio construction at the sister site,
-      <a href="https://schur.microprediction.org">schur.microprediction.org</a>.
+      particle feels the true marginal, which is the reduced mass. At $\gamma = 0$ the joint is
+      clamped to the data. The particle inherits the channel&apos;s full stiffness $\rho$ and is
+      pulled hard toward $y$. It is overconfident, because the joint&apos;s own uncertainty has
+      been ignored. An interior $\gamma$ trusts the recoil partway. That is the right posture when
+      the coupling $\rho$ is estimated rather than known. The same dial damps the off-diagonal
+      feedback of a partitioned precision matrix. At the sister site
+      <a href="https://schur.microprediction.org">schur.microprediction.org</a> it interpolates
+      hierarchical and optimisation-based portfolio construction.
     </p>
     <p>
-      The top rail is the true chain; the bottom rail is the $\gamma$-damped consolidation.
-      <strong>Slide $\gamma$ to 1</strong> and the two particles meet on the dashed line;
-      slide it toward 0 and the bottom body swells to mass $\rho$ and drags its particle
-      toward the observation. Drag any body to move the anchors.
+      The top rail is the true chain. The bottom rail is the $\gamma$-damped consolidation. Slide
+      $\gamma$ to 1 and the two particles meet on the dashed line. Slide it toward 0 and the
+      bottom body swells to mass $\rho$ and drags its particle toward the observation. Drag any
+      body to move the anchors.
     </p>
 
     <div class="demo-panel">
@@ -112,12 +114,12 @@
     </div>
 
     <p>
-      Everything is still exact &mdash; the damped rail is a real spring system, just one whose
-      stiffness toward the data is $S(\gamma)$ rather than $S(1)$. One honest caveat: the
-      algebra fixes the damped <em>stiffness</em>, but where the damped spring <em>anchors</em>
-      is a modelling choice; here the undamped remainder stays anchored at the data, which is
-      the plug-in (clamped-joint) reading of $\gamma = 0$. Damping does not break the physics;
-      it changes which physics you assert. See the Schur damping papers via
+      The damped rail is still a real spring system. Its stiffness toward the data is
+      $S(\gamma)$ instead of $S(1)$. One honest caveat. The algebra fixes the damped
+      <em>stiffness</em>, but where the damped spring <em>anchors</em> is a modelling choice.
+      Here the undamped remainder stays anchored at the data. That is the plug-in reading of
+      $\gamma = 0$, with the joint clamped. Damping does not break the physics. It changes which
+      physics you assert. See the Schur damping papers through
       <a href="https://schur.microprediction.org">the schur site&apos;s bibliography</a>.
     </p>
   </main>

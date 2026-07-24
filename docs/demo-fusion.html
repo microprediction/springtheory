@@ -50,15 +50,14 @@
     <p class="subtitle">The posterior mean is where the pulling stops.</p>
 
     <p>
-      The dark body is the <strong>prior</strong>; green bodies are <strong>observations</strong>.
-      Each is a mass equal to its precision, tied by a spring to the white test particle, which
-      relaxes to the centre of mass &mdash; the posterior mean. The bowl above is the potential
-      energy, i.e. the negative log posterior; the particle is a ball rolling to its bottom.
-      <strong>Drag any body</strong>, or <strong>add an observation</strong> and watch
-      equilibrium re-form. The $\rho$ dial threads every observation through a noisy channel of
-      that precision, replacing its mass $\phi$ by the reduced mass
-      $\phi\rho/(\phi+\rho)$; at the far right the channel is rigid ($\rho=\infty$) and the
-      update is the vanilla Kalman step.
+      The dark body is the prior. The green bodies are observations. Each carries a mass equal
+      to its precision and is tied by a spring to the white test particle. The particle relaxes
+      to the centre of mass, which is the posterior mean. The bowl above is the potential energy,
+      the negative log posterior. The particle is a ball rolling to its bottom. Drag any body, or
+      add an observation, and watch the equilibrium re-form. The $\rho$ dial threads every
+      observation through a noisy channel of that precision. This replaces its mass $\phi$ by the
+      reduced mass $\phi\rho/(\phi+\rho)$. At the far right the channel is rigid at $\rho=\infty$,
+      and the update is the plain Kalman step.
     </p>
 
     <div class="demo-panel">
@@ -86,10 +85,12 @@
     </div>
 
     <p>
-      Everything on screen is computed twice: the readout uses the closed-form update
-      $m' = \big(P^{-1}m + \sum_i \tilde\phi_i y_i\big)\big/\big(P^{-1} + \sum_i \tilde\phi_i\big)$,
-      while the particle just integrates $F = ma$ with damping. That they agree is the point.
-      Derivation in the <a href="./intro.html">introduction</a>.
+      Everything on screen is computed twice. The readout uses the closed-form update
+      $m' = \big(P^{-1}m + \sum_i \tilde\phi_i y_i\big)\big/\big(P^{-1} + \sum_i \tilde\phi_i\big)$.
+      The particle just integrates $F = ma$ with damping. The two agree. Weighting each
+      observation by its precision is an old habit. Gauss combined observations this way through
+      least squares in the early 1800s, and the inverse-variance weighted average is the one with
+      the least variance. Derivation in the <a href="./intro.html">introduction</a>.
     </p>
   </main>
 

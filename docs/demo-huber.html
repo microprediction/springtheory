@@ -50,9 +50,9 @@
     <p class="subtitle">A spring that gives up trying, past a threshold.</p>
 
     <p>
-      Five observations, one shared parameter $z$, three rails. Each observation pulls on $z$
-      with the <em>same</em> spring shape on a given rail, and the three rails differ only in
-      that shape:
+      Five observations, one shared parameter $z$, and three rails. Each observation pulls on
+      $z$ with the same spring shape on a given rail. The three rails differ only in that
+      shape:
     </p>
     <div class="equation-card">
       $$ F_{\text{L2}}(y,z) = \phi(y-z), \qquad
@@ -61,23 +61,21 @@
          \phi\,\delta\,\mathrm{sign}(y-z) & |y-z|>\delta \end{cases} $$
     </div>
     <p>
-      <strong>L2</strong> (top) is an ordinary Hookean spring per point: the equilibrium is the
-      plain mean, and one wild point drags it arbitrarily far. <strong>L1</strong> (bottom) is
-      five constant-tension pulleys, exactly like the <a href="./demo-lasso.html">Lasso
-      demo</a>&apos;s device: the equilibrium is the <strong>median</strong>, provably
-      immovable by any single point no matter how extreme. <strong>Huber</strong> (middle) is
-      the practical compromise: an ordinary spring for small residuals, but past a threshold
-      $\delta$ it switches to the same constant pull as L1 &mdash; the spring notices it&apos;s
-      dealing with an outlier and stops trying so hard.
+      L2 is the top rail. It is an ordinary Hookean spring per point. The equilibrium is the
+      plain mean, and one wild point drags it arbitrarily far. L1 is the bottom rail: five
+      constant-tension pulleys, like the <a href="./demo-lasso.html">Lasso demo</a>&apos;s
+      device. The equilibrium is the <em>median</em>, provably immovable by any single point
+      however extreme. Huber is the middle rail, the practical compromise. It is an ordinary
+      spring for small residuals. Past a threshold $\delta$ it switches to the same constant
+      pull as L1. The spring notices it is dealing with an outlier and stops trying so hard.
     </p>
     <p>
-      <strong>Drag the rightmost point</strong> far away and watch: the L2 hub follows it
-      linearly, without limit; the Huber hub moves, then flattens out once the residual passes
-      $\delta$; the L1 hub barely notices at all. <strong>Slide $\delta$</strong> to $0$ and the
-      Huber rail becomes L1; slide it past the data&apos;s spread and it becomes L2 &mdash; one
-      threshold, the same two extremes as the
-      <a href="./demo-robust-smoother.html">exponent dial</a> reaches by reshaping the whole
-      curve instead of capping it.
+      <em>Drag the rightmost point</em> far away and watch. The L2 hub follows it linearly,
+      without limit. The Huber hub moves, then flattens out once the residual passes $\delta$.
+      The L1 hub barely notices. <em>Slide $\delta$</em> to $0$ and the Huber rail becomes L1.
+      Slide it past the data&apos;s spread and it becomes L2. One threshold reaches the same two
+      extremes as the <a href="./demo-robust-smoother.html">exponent dial</a>, which gets there
+      by reshaping the whole curve instead of capping it.
     </p>
 
     <div class="demo-panel">
@@ -99,9 +97,11 @@
     </div>
 
     <p>
-      Huber (1964) introduced exactly this loss to get a robust location estimator with a
-      bounded influence function but without discarding the efficiency of the mean when data
-      really are clean &mdash; the compromise this page makes mechanical.
+      Peter Huber introduced this loss in 1964, in a paper on robust estimation of a location
+      parameter. He wanted an estimator with a bounded influence function that did not throw
+      away the efficiency of the mean when the data really are clean. His estimators sit
+      between the sample mean and the sample median. That is the compromise this page makes
+      mechanical.
     </p>
   </main>
 
