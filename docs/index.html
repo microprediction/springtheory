@@ -291,9 +291,11 @@
 
   const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a';
   const PAD = 42, YMIN = 0, YMAX = 10;
-  const TMAX = 26;   // slots reserved on the x axis
+  const TMAX = 30;   // most beads the chain will hold
 
-  const px = t => PAD + t / (TMAX - 1) * (W - 2 * PAD);
+  // space the beads across the full width for whatever count we currently have,
+  // so the chain always fills the canvas instead of the reserved slots
+  const px = t => PAD + (ys.length > 1 ? t / (ys.length - 1) : 0) * (W - 2 * PAD);
   const py = y => H - 34 - (y - YMIN) / (YMAX - YMIN) * (H - 78);
   const wy = p => YMIN + (H - 34 - p) / (H - 78) * (YMAX - YMIN);
 
