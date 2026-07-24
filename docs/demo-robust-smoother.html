@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Robust Smoothing: Median vs Kalman</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <div class="nav-dropdown">
+          <a href="./demos.html">Demos</a>
+          <div class="nav-dropdown-menu">
+            <a href="./index.html">The Kalman smoother</a>
+            <a href="./demo-fusion.html">Evidence fusion</a>
+            <a href="./demo-reduced-mass.html">Reduced mass</a>
+            <a href="./demo-kalman-filter.html">The filter through time</a>
+            <a href="./demo-graph.html">Conditioning a Gaussian graph</a>
+            <a href="./demo-schur-damping.html">Schur damping</a>
+            <a href="./demo-least-squares.html">Least squares as springs</a>
+            <a href="./demo-smoother.html">The time-series smoother</a>
+            <a href="./demo-robust-smoother.html">Robust smoothing: median vs Kalman</a>
+            <a href="./demo-huber.html">Huber loss</a>
+            <a href="./demo-roll.html">Bid-ask bounce</a>
+            <a href="./demo-minvar.html">Minimum variance</a>
+            <a href="./demo-pca.html">PCA as a rod on collars</a>
+            <a href="./demo-lasso.html">Ridge vs Lasso</a>
+          </div>
+        </div>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Robust smoothing: median vs Kalman</h1>
+    <p class="subtitle">One dial, from a bounded-influence median filter to the ordinary Kalman smoother.</p>
+
+    <p>
+      The <a href="./index.html">smoother</a>&apos;s measurement spring has energy
+      $\tfrac12\phi(x_t-y_t)^2$ &mdash; a fixed shape, quadratic. Generalise it to a
+      <strong>power law</strong>,
+    </p>
+    <div class="equation-card">
+      $$ E \;=\; \sum_t \frac{\phi}{p}\,|x_t - y_t|^p \;+\; \sum_t \tfrac12\,q\,(x_{t+1}-x_t)^2,
+         \qquad
+         F_{\text{meas}}(t) \;=\; \phi\,\mathrm{sign}(y_t-x_t)\,|y_t-x_t|^{p-1}. $$
+    </div>
+    <p>
+      At $p=2$ the force is $\phi(y_t-x_t)$: an ordinary Hookean spring, pull growing
+      <em>linearly</em> with the residual &mdash; the Kalman smoother, exactly as before. At
+      $p=1$ the force is $\phi\,\mathrm{sign}(y_t-x_t)$: <strong>constant magnitude</strong>,
+      regardless of how far off $y_t$ is &mdash; the same constant-tension device as the
+      <a href="./demo-lasso.html">Lasso demo</a>&apos;s pulley, and it makes each bead settle
+      at the (process-weighted) <strong>median</strong> of its neighbours and its own
+      observation. Between $1$ and $2$, the influence function $|r|^{p-1}$ grows
+      <strong>sub-linearly</strong> in the residual $r$ &mdash; a continuous dial between the
+      two.
+    </p>
+    <p>
+      Point 4 below is a planted outlier. <strong>Drag $p$ from $2$ down to $1$</strong> and
+      watch the green (live) curve peel away from the grey dashed line &mdash; the ordinary
+      Kalman fit, which the outlier drags noticeably &mdash; while the green curve near that
+      point barely moves once $p$ nears $1$: its influence has saturated. Drag any point
+      yourself to plant a bigger or smaller outlier and see the gap widen or close.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="440"></canvas>
+      <div class="controls">
+        <label><span class="lab">exponent $p$</span>
+          <input type="range" id="pp" min="1" max="2.2" step="0.01" value="2"><span class="val" id="ppv"></span></label>
+        <label><span class="lab">chain stiffness $q$</span>
+          <input type="range" id="lq" min="-1" max="1.3" step="0.02" value="0.2"><span class="val" id="lqv"></span></label>
+        <label><span class="lab">obs. mass $\phi$</span>
+          <input type="range" id="lr" min="-0.5" max="1" step="0.02" value="0.2"><span class="val" id="lrv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(140px, max-content));">
+        <button id="regen">New data</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>$p$ reads as <b id="rlabel"></b></span>
+        <span>max deviation from Kalman fit <b id="rdev"></b></span>
+      </div>
+    </div>
+
+    <p>
+      This is exactly the &ldquo;sub-linear gain&rdquo; framing of robust M-estimation: the
+      <em>influence function</em> $\psi(r)=|r|^{p-1}\mathrm{sign}(r)$ is linear (unbounded
+      influence) at $p=2$ and constant (bounded influence) at $p=1$. The
+      <a href="./demo-huber.html">Huber loss demo</a> takes the other common route to the same
+      place &mdash; keep the spring exactly quadratic near zero, but cap its force beyond a
+      threshold &mdash; rather than reshaping the whole curve.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 440;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', GONE = '#c9c7e6';
+  const PAD = 42, YMIN = 0, YMAX = 14, TMAX = 14;
+  const px = t => PAD + t / (TMAX - 1) * (W - 2 * PAD);
+  const py = y => H - 34 - (y - YMIN) / (YMAX - YMIN) * (H - 78);
+  const wy = p => YMIN + (H - 34 - p) / (H - 78) * (YMAX - YMIN);
+
+  const ui = { pp: document.getElementById('pp'), lq: document.getElementById('lq'), lr: document.getElementById('lr') };
+  const out = {};
+  ['ppv', 'lqv', 'lrv', 'rlabel', 'rdev'].forEach(id => out[id] = document.getElementById(id));
+  const pExp = () => parseFloat(ui.pp.value);
+  const q = () => Math.pow(10, parseFloat(ui.lq.value));
+  const phi = () => Math.pow(10, parseFloat(ui.lr.value));
+
+  function randn() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function truth(t) { return 6 + 2.6 * Math.sin(t / 3.2) + 0.05 * t; }
+
+  let ys = [], x = [], v = [];
+  function regen() {
+    ys = Array.from({ length: TMAX }, (_, t) => truth(t) + 0.5 * randn());
+    ys[4] = truth(4) + 6.2;   // a planted outlier, always at index 4
+    x = [...ys]; v = ys.map(() => 0);
+  }
+  regen();
+
+  // exact tridiagonal solve at p = 2, for the fixed reference curve
+  function exactL2() {
+    const n = ys.length, qq = q(), rr = phi();
+    const a = [], b = [], c = [], d = [];
+    for (let t = 0; t < n; t++) {
+      const deg = (t > 0 ? 1 : 0) + (t < n - 1 ? 1 : 0);
+      b.push(rr + qq * deg); a.push(t > 0 ? -qq : 0); c.push(t < n - 1 ? -qq : 0);
+      d.push(rr * ys[t]);
+    }
+    for (let t = 1; t < n; t++) { const m = a[t] / b[t - 1]; b[t] -= m * c[t - 1]; d[t] -= m * d[t - 1]; }
+    const s = new Array(n); s[n - 1] = d[n - 1] / b[n - 1];
+    for (let t = n - 2; t >= 0; t--) s[t] = (d[t] - c[t] * s[t + 1]) / b[t];
+    return s;
+  }
+
+  const DT = 1 / 60, ZETA = 0.6, OMEGA = 6.5;
+  function step() {
+    const n = ys.length, qq = q(), rr = phi(), p = pExp();
+    const F = new Array(n), K = new Array(n);
+    for (let t = 0; t < n; t++) {
+      const r = ys[t] - x[t];
+      let f = r === 0 ? 0 : rr * Math.sign(r) * Math.pow(Math.abs(r), p - 1);
+      let k = Math.max(rr, 0.05);
+      if (t > 0) { f += qq * (x[t - 1] - x[t]); k += qq; }
+      if (t < n - 1) { f += qq * (x[t + 1] - x[t]); k += qq; }
+      F[t] = f; K[t] = k;
+    }
+    for (let t = 0; t < n; t++) {
+      v[t] += (OMEGA * OMEGA * (F[t] / K[t]) - 2 * ZETA * OMEGA * v[t]) * DT;
+      x[t] += v[t] * DT;
+    }
+  }
+
+  function vspring(xp, y1, y2) {
+    const gap = Math.abs(y2 - y1);
+    if (gap < 10) { ctx.beginPath(); ctx.moveTo(xp, y1); ctx.lineTo(xp, y2); ctx.stroke(); return; }
+    const n = Math.max(2, Math.round(gap / 14) + 1), amp = 4.5;
+    const dy = (y2 - y1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(xp, y1); ctx.lineTo(xp, y1 + dy);
+    for (let i = 0; i < n * 2; i++) ctx.lineTo(xp + (i % 2 ? amp : -amp), y1 + dy * (i + 1.5));
+    ctx.lineTo(xp, y2 - dy); ctx.lineTo(xp, y2); ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const n = ys.length, ref = exactL2();
+
+    ctx.strokeStyle = '#ececec'; ctx.lineWidth = 1;
+    for (let t = 0; t < n; t++) { ctx.beginPath(); ctx.moveTo(px(t), 30); ctx.lineTo(px(t), H - 34); ctx.stroke(); }
+
+    // Kalman (p=2) reference
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = GONE; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let t = 0; t < n; t++) t === 0 ? ctx.moveTo(px(t), py(ref[t])) : ctx.lineTo(px(t), py(ref[t]));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#8a88b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('dashed: Kalman (p = 2), fixed reference', PAD - 14, 22);
+
+    // measurement "springs" (power-law, drawn plain past the linear regime for p<2)
+    ctx.strokeStyle = '#c4c4c4'; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+    for (let t = 0; t < n; t++) vspring(px(t), py(ys[t]), py(x[t]));
+
+    // chain
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let t = 0; t < n; t++) t === 0 ? ctx.moveTo(px(t), py(x[t])) : ctx.lineTo(px(t), py(x[t]));
+    ctx.stroke();
+
+    for (let t = 0; t < n; t++) {
+      ctx.fillStyle = t === 4 ? '#b3542e' : INK;
+      ctx.beginPath(); ctx.arc(px(t), py(ys[t]), t === 4 ? 7 : 6, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px(t), py(ys[t]), 2, 0, 7); ctx.fill();
+    }
+    for (let t = 0; t < n; t++) {
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = ACC; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(px(t), py(x[t]), 5.5, 0, 7); ctx.fill(); ctx.stroke();
+    }
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('dark/red: observations (red = planted outlier)   green: current fit', PAD - 14, H - 8);
+
+    let maxdev = 0; for (let t = 0; t < n; t++) maxdev = Math.max(maxdev, Math.abs(x[t] - ref[t]));
+    const p = pExp();
+    out.ppv.textContent = p.toFixed(2);
+    out.lqv.textContent = q().toFixed(2);
+    out.lrv.textContent = phi().toFixed(2);
+    out.rlabel.textContent = p <= 1.05 ? '≈ median (bounded influence)' : (p >= 1.95 ? '≈ Kalman (mean, unbounded influence)' : 'robust interpolation');
+    out.rdev.textContent = maxdev.toFixed(3);
+  }
+
+  // --- interaction: drag any observation --------------------------------
+  let drag = null;
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my) {
+    for (let t = 0; t < ys.length; t++) if (Math.hypot(mx - px(t), my - py(ys[t])) < 13) return t;
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = hit(...evPos(e));
+    if (drag !== null) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag !== null) ys[drag] = Math.min(YMAX - 0.3, Math.max(YMIN + 0.3, wy(my)));
+    else cv.style.cursor = hit(mx, my) !== null ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('regen').addEventListener('click', regen);
+  document.getElementById('reset').addEventListener('click', () => {
+    ui.pp.value = 2; ui.lq.value = 0.2; ui.lr.value = 0.2; regen();
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

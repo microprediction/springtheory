@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Huber Loss</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <div class="nav-dropdown">
+          <a href="./demos.html">Demos</a>
+          <div class="nav-dropdown-menu">
+            <a href="./index.html">The Kalman smoother</a>
+            <a href="./demo-fusion.html">Evidence fusion</a>
+            <a href="./demo-reduced-mass.html">Reduced mass</a>
+            <a href="./demo-kalman-filter.html">The filter through time</a>
+            <a href="./demo-graph.html">Conditioning a Gaussian graph</a>
+            <a href="./demo-schur-damping.html">Schur damping</a>
+            <a href="./demo-least-squares.html">Least squares as springs</a>
+            <a href="./demo-smoother.html">The time-series smoother</a>
+            <a href="./demo-robust-smoother.html">Robust smoothing: median vs Kalman</a>
+            <a href="./demo-huber.html">Huber loss</a>
+            <a href="./demo-roll.html">Bid-ask bounce</a>
+            <a href="./demo-minvar.html">Minimum variance</a>
+            <a href="./demo-pca.html">PCA as a rod on collars</a>
+            <a href="./demo-lasso.html">Ridge vs Lasso</a>
+          </div>
+        </div>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Huber loss</h1>
+    <p class="subtitle">A spring that gives up trying, past a threshold.</p>
+
+    <p>
+      Five observations, one shared parameter $z$, three rails. Each observation pulls on $z$
+      with the <em>same</em> spring shape on a given rail, and the three rails differ only in
+      that shape:
+    </p>
+    <div class="equation-card">
+      $$ F_{\text{L2}}(y,z) = \phi(y-z), \qquad
+         F_{\text{L1}}(y,z) = \phi\,\mathrm{sign}(y-z), \qquad
+         F_{\text{Huber}}(y,z) = \begin{cases} \phi(y-z) & |y-z|\le\delta \\
+         \phi\,\delta\,\mathrm{sign}(y-z) & |y-z|>\delta \end{cases} $$
+    </div>
+    <p>
+      <strong>L2</strong> (top) is an ordinary Hookean spring per point: the equilibrium is the
+      plain mean, and one wild point drags it arbitrarily far. <strong>L1</strong> (bottom) is
+      five constant-tension pulleys, exactly like the <a href="./demo-lasso.html">Lasso
+      demo</a>&apos;s device: the equilibrium is the <strong>median</strong>, provably
+      immovable by any single point no matter how extreme. <strong>Huber</strong> (middle) is
+      the practical compromise: an ordinary spring for small residuals, but past a threshold
+      $\delta$ it switches to the same constant pull as L1 &mdash; the spring notices it&apos;s
+      dealing with an outlier and stops trying so hard.
+    </p>
+    <p>
+      <strong>Drag the rightmost point</strong> far away and watch: the L2 hub follows it
+      linearly, without limit; the Huber hub moves, then flattens out once the residual passes
+      $\delta$; the L1 hub barely notices at all. <strong>Slide $\delta$</strong> to $0$ and the
+      Huber rail becomes L1; slide it past the data&apos;s spread and it becomes L2 &mdash; one
+      threshold, the same two extremes as the
+      <a href="./demo-robust-smoother.html">exponent dial</a> reaches by reshaping the whole
+      curve instead of capping it.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="440"></canvas>
+      <div class="controls">
+        <label><span class="lab">threshold $\delta$</span>
+          <input type="range" id="delta" min="0" max="10" step="0.05" value="2"><span class="val" id="deltav"></span></label>
+        <label><span class="lab">mass $\phi$</span>
+          <input type="range" id="phi" min="0.3" max="3" step="0.02" value="1.4"><span class="val" id="phiv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>L2 (mean) <b id="rL2"></b></span>
+        <span>Huber <b id="rH"></b></span>
+        <span>L1 (median) <b id="rL1"></b></span>
+      </div>
+    </div>
+
+    <p>
+      Huber (1964) introduced exactly this loss to get a robust location estimator with a
+      bounded influence function but without discarding the efficiency of the mean when data
+      really are clean &mdash; the compromise this page makes mechanical.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 440;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', ACC = '#0b7a55', FAINT = '#9a9a9a', BLUE = '#3a6ea5', ORANGE = '#c07a2e';
+  const XMIN = -2, XMAX = 22, PAD = 42;
+  const RAIL1 = 120, RAIL2 = 250, RAIL3 = 380;
+  const px = x => PAD + (x - XMIN) / (XMAX - XMIN) * (W - 2 * PAD);
+  const wx = p => XMIN + (p - PAD) / (W - 2 * PAD) * (XMAX - XMIN);
+
+  const ui = { delta: document.getElementById('delta'), phi: document.getElementById('phi') };
+  const out = {};
+  ['deltav', 'phiv', 'rL2', 'rH', 'rL1'].forEach(id => out[id] = document.getElementById(id));
+  const delta = () => parseFloat(ui.delta.value);
+  const phi = () => parseFloat(ui.phi.value);
+
+  let ys = [3, 5, 6.5, 7, 12];
+  let zL2 = 6, zH = 6, zL1 = 6, vL2 = 0, vH = 0, vL1 = 0;
+
+  function fL2(y, z) { return phi() * (y - z); }
+  function fL1(y, z) { const r = y - z; return r === 0 ? 0 : phi() * Math.sign(r); }
+  function fHuber(y, z) {
+    const r = y - z, a = Math.abs(r), d = delta();
+    return a <= d ? phi() * r : phi() * d * Math.sign(r);
+  }
+
+  const DT = 1 / 60, ZETA = 0.75, OMEGA = 7;
+  function step() {
+    const K = Math.max(phi(), 0.05) * ys.length;
+    let F2 = 0, FH = 0, F1 = 0;
+    for (const y of ys) { F2 += fL2(y, zL2); FH += fHuber(y, zH); F1 += fL1(y, zL1); }
+    vL2 += (OMEGA * OMEGA * (F2 / K) - 2 * ZETA * OMEGA * vL2) * DT; zL2 += vL2 * DT;
+    vH += (OMEGA * OMEGA * (FH / K) - 2 * ZETA * OMEGA * vH) * DT; zH += vH * DT;
+    vL1 += (OMEGA * OMEGA * (F1 / K) - 2 * ZETA * OMEGA * vL1) * DT; zL1 += vL1 * DT;
+  }
+
+  const radius = () => 8 + 5 * Math.sqrt(phi());
+
+  function spring(x1, x2, ypos, amp, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    const gap = Math.abs(x2 - x1);
+    if (gap < 14) { ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke(); return; }
+    const n = Math.max(3, Math.round(gap / 26) + 2), dx = (x2 - x1) / (n * 2 + 2);
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x1 + dx, ypos);
+    for (let i = 0; i < n * 2; i++) ctx.lineTo(x1 + dx * (i + 1.5), ypos + (i % 2 ? amp : -amp));
+    ctx.lineTo(x2 - dx, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+  }
+  function pulley(x1, x2, ypos, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x1, ypos); ctx.lineTo(x2, ypos); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x2, ypos, 5, 0, 7); ctx.stroke();
+  }
+
+  function rail(ypos) {
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.roundRect(px(XMIN) - 6, ypos, px(XMAX) - px(XMIN) + 12, 6, 3); ctx.fill();
+  }
+
+  function drawRail(ypos, z, color, kind, label) {
+    rail(ypos);
+    const y0 = ypos - 14;
+    for (const y of ys) {
+      if (kind === 'huber') {
+        const d = delta(), a = Math.abs(y - z);
+        if (a <= d) spring(px(y), px(z), y0, 6, '#b5b5b5');
+        else pulley(px(y), px(z), y0, '#d9b8a6');
+      } else if (kind === 'l1') pulley(px(y), px(z), y0, '#d9b8a6');
+      else spring(px(y), px(z), y0, 6, '#b5b5b5');
+    }
+    if (kind === 'huber') {
+      ctx.setLineDash([2, 4]); ctx.strokeStyle = '#eadfce'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(z - delta()), y0 - 16); ctx.lineTo(px(z - delta()), y0 + 16); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px(z + delta()), y0 - 16); ctx.lineTo(px(z + delta()), y0 + 16); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    for (const y of ys) {
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px(y), y0, 6, 0, 7); ctx.fill();
+    }
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(z), y0, radius() * 0.6, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(label, px(XMIN) - 6, ypos - 44);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawRail(RAIL1, zL2, ACC, 'l2', 'L2 — plain spring, equilibrium = mean');
+    drawRail(RAIL2, zH, BLUE, 'huber', 'Huber — spring inside δ, capped pull beyond');
+    drawRail(RAIL3, zL1, ORANGE, 'l1', 'L1 — constant-tension pulleys, equilibrium = median');
+
+    out.deltav.textContent = delta().toFixed(2);
+    out.phiv.textContent = phi().toFixed(2);
+    out.rL2.textContent = zL2.toFixed(3);
+    out.rH.textContent = zH.toFixed(3);
+    out.rL1.textContent = zL1.toFixed(3);
+  }
+
+  // --- interaction: drag any of the five points --------------------------
+  let drag = null;
+  function evPos(e) {
+    const b = cv.getBoundingClientRect();
+    return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height];
+  }
+  function hit(mx, my) {
+    for (const ry of [RAIL1 - 14, RAIL2 - 14, RAIL3 - 14]) {
+      for (let i = 0; i < ys.length; i++) if (Math.hypot(mx - px(ys[i]), my - ry) < 12) return i;
+    }
+    return null;
+  }
+  cv.addEventListener('pointerdown', e => {
+    drag = hit(...evPos(e));
+    if (drag !== null) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const [mx, my] = evPos(e);
+    if (drag !== null) ys[drag] = Math.min(XMAX - 0.3, Math.max(XMIN + 0.3, wx(mx)));
+    else cv.style.cursor = hit(mx, my) !== null ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { drag = null; });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    ys = [3, 5, 6.5, 7, 12]; ui.delta.value = 2; ui.phi.value = 1.4;
+    zL2 = zH = zL1 = 6; vL2 = vH = vL1 = 0;
+  });
+
+  (function loop() { step(); step(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>
