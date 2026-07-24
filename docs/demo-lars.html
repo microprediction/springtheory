@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spring Theory &mdash; Least Angle Regression</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16 h4 l3 -8 6 16 6 -16 3 8 h4' stroke='%230b7a55' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="./index.html">springtheory</a>
+      <nav>
+        <a href="./intro.html">Introduction</a>
+        <a href="./dictionary.html">Dictionary</a>
+        <div class="nav-dropdown">
+          <a href="./demos.html">Demos</a>
+          <div class="nav-dropdown-menu">
+            <a href="./index.html">The Kalman smoother</a>
+            <a href="./demo-fusion.html">Evidence fusion</a>
+            <a href="./demo-reduced-mass.html">Reduced mass</a>
+            <a href="./demo-kalman-filter.html">The filter through time</a>
+            <a href="./demo-graph.html">Conditioning a Gaussian graph</a>
+            <a href="./demo-schur-damping.html">Schur damping</a>
+            <a href="./demo-least-squares.html">Least squares as springs</a>
+            <a href="./demo-smoother.html">The time-series smoother</a>
+            <a href="./demo-robust-smoother.html">Robust smoothing: median vs Kalman</a>
+            <a href="./demo-huber.html">Huber loss</a>
+            <a href="./demo-roll.html">Bid-ask bounce</a>
+            <a href="./demo-minvar.html">Minimum variance</a>
+            <a href="./demo-pca.html">PCA as a rod on collars</a>
+            <a href="./demo-lasso.html">Ridge vs Lasso</a>
+            <a href="./demo-lars.html">Least angle regression</a>
+          </div>
+        </div>
+        <a href="./index.html#reading">Bibliography</a>
+        <a href="https://github.com/microprediction/springtheory">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="pagenav"><a href="./demos.html">&larr; Demos</a></p>
+    <h1>Least angle regression</h1>
+    <p class="subtitle">Lower the tension slowly, and predictors engage one at a time &mdash; each held at exactly the ceiling.</p>
+
+    <p>
+      The <a href="./demo-lasso.html">Lasso demo</a> replaced the shrinkage spring with a
+      <em>constant-tension</em> pulley of force $\lambda$: a predictor sits at exactly zero until
+      its correlation with the residual exceeds $\lambda$, at which point it engages. Least angle
+      regression (LARS) is what you get when you take that one threshold and <strong>lower it
+      continuously</strong> from very high to zero, watching the whole configuration re-form as
+      it descends.
+    </p>
+    <p>
+      The Karush&ndash;Kuhn&ndash;Tucker conditions for the Lasso say exactly this: at penalty
+      $\lambda$, every <em>active</em> predictor has $|x_j^{\top} r| = \lambda$ &mdash; its
+      correlation with the residual is pinned to the ceiling &mdash; while every idle one sits
+      strictly below, $|x_j^{\top} r| \le \lambda$. So as $\lambda$ falls the active predictors
+      march down together, always tied, always equal to the current tension:
+    </p>
+    <div class="equation-card">
+      $$ x_j^{\top}\!\left(y - X\beta\right) = \lambda\,\operatorname{sign}(\beta_j)\ \ (j\ \text{active}),
+         \qquad \left|x_k^{\top}\!\left(y - X\beta\right)\right| \le \lambda\ \ (k\ \text{idle}). $$
+    </div>
+    <p>
+      The name is the mechanism. To keep every active correlation equal as the fit advances, the
+      fitted vector must move along the direction that makes <strong>equal angles</strong> with
+      all active predictors &mdash; the <em>least angle</em>, equiangular direction. Move that way
+      and the tied correlations decay in lockstep; an idle predictor stays out until the
+      descending ceiling reaches its correlation, and then it joins. Between two such joins the
+      coefficients are exactly <strong>linear</strong> in $\lambda$, so the whole solution path is
+      piecewise-linear with a kink at each engagement &mdash; and it <em>is</em> the Lasso path,
+      traced from the top down.
+    </p>
+
+    <div class="demo-panel">
+      <canvas id="cv" width="760" height="500"></canvas>
+      <div class="controls">
+        <label><span class="lab">tension / penalty $\lambda$</span>
+          <input type="range" id="lam" min="0" max="1" step="0.0005" value="0.62"><span class="val" id="lamv"></span></label>
+      </div>
+      <div class="controls" style="grid-template-columns: repeat(auto-fit, minmax(120px, max-content));">
+        <button id="play">Lower the ceiling</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>active set <b id="ract"></b></span>
+        <span>&lambda; <b id="rlam"></b></span>
+        <span>&beta; <b id="rbeta"></b></span>
+      </div>
+    </div>
+
+    <p>
+      <strong>Top:</strong> the descending ceiling. Each line is one predictor&apos;s absolute
+      correlation with the current residual, $|x_j^{\top} r|$, plotted against $\lambda$ (which
+      runs high&#8594;low, left to right). The dashed diagonal is the ceiling $|c| = \lambda$
+      itself. Idle predictors ride <em>below</em> it; the moment a line touches the ceiling that
+      predictor engages and then travels <em>down the diagonal</em>, glued to $\lambda$ &mdash;
+      tied with every other active one. <strong>Bottom:</strong> the coefficient path, sharing
+      the same $\lambda$ axis, so the dotted sweep line links the two &mdash; each $\beta_j$
+      leaves zero at exactly the $\lambda$ where, directly above, its correlation hit the
+      ceiling, and every segment is a straight line. <strong>Drag $\lambda$</strong>, or press
+      <em>Lower the ceiling</em>, and watch the four predictors engage one after another; at
+      $\lambda = 0$ the path arrives at the ordinary least-squares fit.
+    </p>
+    <p>
+      Efron, Hastie, Johnstone &amp; Tibshirani (2004) introduced LARS precisely as this
+      descent: a single, exact, order-$p$ sweep that produces the entire Lasso regularisation
+      path, one equiangular segment per active-set change &mdash; the constant-tension device of
+      the <a href="./demo-lasso.html">previous demo</a>, filmed as its weight is slowly lifted.
+    </p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/microprediction/springtheory">Source</a> &middot;
+    Maintained by <a href="https://github.com/microprediction">Peter Cotton</a>.
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = 760, H = 500;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.aspectRatio = W + '/' + H;
+  ctx.scale(dpr, dpr);
+
+  const INK = '#12312a', FAINT = '#9a9a9a', GRID = '#e6e6e6';
+  const COL = ['#0b7a55', '#3a6ea5', '#c07a2e', '#7a5aa0'];   // one colour per predictor
+  const NAME = ['x₁', 'x₂', 'x₃', 'x₄'];
+
+  // --- fixed correlated design (columns standardised, y centred in JS) -------
+  const Xraw = [
+    [ 1.2,  1.6, -1.8,  1.3],
+    [-1.7, -1.3, -0.1, -0.9],
+    [ 0.9,  1.6, -0.1, -1.7],
+    [ 1.0, -0.9, -0.1,  1.8],
+    [-0.3, -1.2, -1.5, -0.4],
+    [ 2.0,  1.5,  0.6, -1.0],
+    [-1.4, -0.8, -1.7,  0.2],
+    [-0.3,  2.0,  1.1, -1.7],
+    [-0.3,  0.7,  1.8, -0.9]
+  ];
+  const yraw = [-2.3, 3.1, -2.2, -1.9, 2.7, -3.2, 1.9, -0.8, -2.5];
+  const n = Xraw.length, p = Xraw[0].length;
+
+  // standardise columns to mean 0 / unit norm, centre y
+  const Xs = [], ys = [];
+  {
+    const mean = [], norm = [];
+    for (let j = 0; j < p; j++) {
+      let m = 0; for (let i = 0; i < n; i++) m += Xraw[i][j]; m /= n; mean.push(m);
+      let s = 0; for (let i = 0; i < n; i++) s += (Xraw[i][j] - m) ** 2; norm.push(Math.sqrt(s));
+    }
+    for (let i = 0; i < n; i++) { const r = []; for (let j = 0; j < p; j++) r.push((Xraw[i][j] - mean[j]) / norm[j]); Xs.push(r); }
+    let ym = 0; for (const v of yraw) ym += v; ym /= n;
+    for (const v of yraw) ys.push(v - ym);
+  }
+
+  function corr(mu) { const o = new Array(p).fill(0);
+    for (let j = 0; j < p; j++) { let s = 0; for (let i = 0; i < n; i++) s += Xs[i][j] * (ys[i] - mu[i]); o[j] = s; } return o; }
+  function solve(A, b) { const k = b.length; const M = A.map((r, i) => r.concat([b[i]]));
+    for (let c = 0; c < k; c++) { let piv = c; for (let r = c + 1; r < k; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+      [M[c], M[piv]] = [M[piv], M[c]]; const d = M[c][c];
+      for (let cc = c; cc <= k; cc++) M[c][cc] /= d;
+      for (let r = 0; r < k; r++) if (r !== c) { const f = M[r][c]; for (let cc = c; cc <= k; cc++) M[r][cc] -= f * M[c][cc]; } }
+    return M.map(r => r[k]); }
+
+  // --- LARS homotopy: list of breakpoints {lambda, beta[], c[]} ---------------
+  function lars() {
+    let mu = new Array(n).fill(0), beta = new Array(p).fill(0);
+    const A = [], path = [];
+    let c = corr(mu), C = Math.max(...c.map(Math.abs));
+    path.push({ lambda: C, beta: beta.slice(), c: c.map(Math.abs) });
+    for (let it = 0; it < p; it++) {
+      c = corr(mu); C = Math.max(...c.map(Math.abs));
+      if (C < 1e-9) break;
+      for (let j = 0; j < p; j++) if (Math.abs(Math.abs(c[j]) - C) < 1e-9 && !A.includes(j)) A.push(j);
+      const s = A.map(j => Math.sign(c[j]));
+      const G = A.map((j, a) => A.map((k, b) => { let d = 0; for (let i = 0; i < n; i++) d += Xs[i][j] * Xs[i][k]; return s[a] * s[b] * d; }));
+      const ones = A.map(() => 1), Gi = solve(G, ones);
+      const AA = 1 / Math.sqrt(Gi.reduce((a, b) => a + b, 0)), w = Gi.map(v => AA * v);
+      const u = new Array(n).fill(0); A.forEach((j, a) => { for (let i = 0; i < n; i++) u[i] += s[a] * w[a] * Xs[i][j]; });
+      const av = new Array(p).fill(0); for (let j = 0; j < p; j++) { let d = 0; for (let i = 0; i < n; i++) d += Xs[i][j] * u[i]; av[j] = d; }
+      let g;
+      if (A.length === p) g = C / AA;
+      else { g = Infinity; for (let j = 0; j < p; j++) if (!A.includes(j)) {
+        const t1 = (C - c[j]) / (AA - av[j]), t2 = (C + c[j]) / (AA + av[j]);
+        for (const t of [t1, t2]) if (t > 1e-12 && t < g) g = t; } }
+      for (let i = 0; i < n; i++) mu[i] += g * u[i];
+      A.forEach((j, a) => { beta[j] += g * s[a] * w[a]; });
+      const cn = corr(mu), Cn = Math.max(...cn.map(Math.abs));
+      path.push({ lambda: Cn, beta: beta.slice(), c: cn.map(Math.abs) });
+    }
+    return path;
+  }
+  const PATH = lars();
+  const LMAX = PATH[0].lambda;
+  // entry lambda for each predictor = first breakpoint where |beta_j| > 0
+  const ENTRY = new Array(p).fill(0);
+  for (let j = 0; j < p; j++) for (let k = 0; k < PATH.length; k++)
+    if (Math.abs(PATH[k].beta[j]) > 1e-9) { ENTRY[j] = PATH[k - 1].lambda; break; }
+
+  // interpolate a field (beta or c) at query lambda; PATH has decreasing lambda
+  function at(field, lam) {
+    if (lam >= PATH[0].lambda) return PATH[0][field].slice();
+    for (let k = 0; k < PATH.length - 1; k++) {
+      const hi = PATH[k].lambda, lo = PATH[k + 1].lambda;
+      if (lam <= hi && lam >= lo) {
+        const t = hi === lo ? 0 : (hi - lam) / (hi - lo);
+        return PATH[k][field].map((v, j) => v + t * (PATH[k + 1][field][j] - v));
+      }
+    }
+    return PATH[PATH.length - 1][field].slice();
+  }
+  const activeAt = lam => { const a = []; for (let j = 0; j < p; j++) if (lam < ENTRY[j] + 1e-9) a.push(j); return a; };
+
+  // --- geometry: two full-width panels stacked, sharing one λ axis -----------
+  const PADL = 56, PADR = 28, PW = W - PADL - PADR;
+  const A = { y: 56, h: 168 };   // top: correlation ceiling
+  const B = { y: 296, h: 168 };  // bottom: coefficient path
+  const CMAX = LMAX * 1.04;
+  const bAll = PATH.flatMap(pt => pt.beta), BLO = Math.min(0, ...bAll) * 1.12, BHI = Math.max(0, ...bAll) * 1.12;
+
+  // λ runs high->low, left->right — one shared mapping for both panels
+  const xL = lam => PADL + (1 - lam / CMAX) * PW;
+  const ayC = c => A.y + A.h - (c / CMAX) * A.h;
+  const byB = b => B.y + B.h - (b - BLO) / (BHI - BLO) * B.h;
+
+  const ui = { lam: document.getElementById('lam') };
+  const out = {}; ['lamv', 'ract', 'rlam', 'rbeta'].forEach(id => out[id] = document.getElementById(id));
+  const lamNow = () => (1 - parseFloat(ui.lam.value)) * LMAX;   // slider 0..1 maps LMAX..0
+
+  function axes() {
+    ctx.strokeStyle = GRID; ctx.lineWidth = 1; ctx.fillStyle = FAINT;
+    ctx.font = '11px sans-serif';
+    for (const P of [A, B]) {
+      ctx.beginPath(); ctx.moveTo(PADL, P.y); ctx.lineTo(PADL, P.y + P.h); ctx.lineTo(PADL + PW, P.y + P.h); ctx.stroke();
+    }
+    // shared λ ticks, labelled once beneath the lower panel
+    ctx.textAlign = 'center';
+    for (let t = 0; t <= 5; t++) {
+      const lam = LMAX * (1 - t / 5);
+      ctx.fillText(lam.toFixed(1), xL(lam), B.y + B.h + 15);
+    }
+    ctx.fillStyle = INK; ctx.font = '12px sans-serif';
+    ctx.fillText('penalty λ  (high → low)', PADL + PW / 2, B.y + B.h + 32);
+    ctx.fillStyle = FAINT; ctx.font = '12px sans-serif';
+    ctx.save(); ctx.translate(PADL - 38, A.y + A.h / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.fillText('|correlation|  |xᵢᵀ r|', 0, 0); ctx.restore();
+    ctx.save(); ctx.translate(PADL - 38, B.y + B.h / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.fillText('coefficient  βᵢ', 0, 0); ctx.restore();
+    ctx.textAlign = 'left'; ctx.fillStyle = INK; ctx.font = '13px sans-serif';
+    ctx.fillText('the descending ceiling', PADL, A.y - 12);
+    ctx.fillText('the coefficient path', PADL, B.y - 12);
+  }
+
+  function polyC(field, mapy, j, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let k = 0; k < PATH.length; k++) {
+      const x = xL(PATH[k].lambda), y = mapy(PATH[k][field][j]);
+      k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const lam = lamNow();
+    axes();
+
+    // top panel: dashed ceiling |c| = λ (the diagonal from top-left to origin)
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xL(LMAX), ayC(LMAX)); ctx.lineTo(xL(0), ayC(0)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#b0b0b0'; ctx.font = 'italic 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('ceiling  |c| = λ', xL(LMAX * 0.5) + 6, ayC(LMAX * 0.5) - 6);
+
+    // bottom panel: zero line
+    ctx.strokeStyle = '#d0d0d0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PADL, byB(0)); ctx.lineTo(PADL + PW, byB(0)); ctx.stroke();
+
+    // curves
+    for (let j = 0; j < p; j++) polyC('c', ayC, j, COL[j]);
+    for (let j = 0; j < p; j++) polyC('beta', byB, j, COL[j]);
+
+    // entry markers where each predictor engages
+    for (let j = 0; j < p; j++) {
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = COL[j]; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(xL(ENTRY[j]), ayC(ENTRY[j]), 4, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(xL(ENTRY[j]), byB(0), 4, 0, 7); ctx.fill(); ctx.stroke();
+    }
+
+    // one continuous sweep line at current λ, threaded through both panels
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(xL(lam), A.y - 4); ctx.lineTo(xL(lam), B.y + B.h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // dots at current λ
+    const cNow = at('c', lam), bNow = at('beta', lam), act = activeAt(lam);
+    for (let j = 0; j < p; j++) {
+      ctx.fillStyle = COL[j];
+      ctx.beginPath(); ctx.arc(xL(lam), ayC(cNow[j]), 3.4, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(xL(lam), byB(bNow[j]), 3.4, 0, 7); ctx.fill();
+    }
+    // legend, right-aligned on the top title row
+    ctx.textAlign = 'left'; ctx.font = '12px sans-serif';
+    const widths = [];
+    for (let j = 0; j < p; j++) widths.push(act.includes(j) ? 44 : 74);
+    let lx = PADL + PW - widths.reduce((a, b) => a + b, 0);
+    for (let j = 0; j < p; j++) {
+      ctx.fillStyle = COL[j]; ctx.beginPath(); ctx.arc(lx + 5, A.y - 16, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = act.includes(j) ? INK : FAINT;
+      ctx.fillText(NAME[j] + (act.includes(j) ? '' : ' (idle)'), lx + 13, A.y - 12);
+      lx += widths[j];
+    }
+
+    out.lamv.textContent = lam.toFixed(2);
+    out.rlam.textContent = lam.toFixed(3);
+    out.ract.textContent = act.length ? act.map(j => NAME[j]).join(', ') : '— (none)';
+    out.rbeta.textContent = '[' + bNow.map(b => b.toFixed(2)).join(', ') + ']';
+  }
+
+  // --- interaction ------------------------------------------------------------
+  let playing = false, raf = null;
+  ui.lam.addEventListener('input', () => { playing = false; });
+  document.getElementById('reset').addEventListener('click', () => { playing = false; ui.lam.value = 0.62; });
+  document.getElementById('play').addEventListener('click', () => {
+    playing = !playing;
+    if (playing && parseFloat(ui.lam.value) >= 0.999) ui.lam.value = 0;
+  });
+
+  function tick() {
+    if (playing) {
+      let v = parseFloat(ui.lam.value) + 0.004;
+      if (v >= 1) { v = 1; playing = false; }
+      ui.lam.value = v;
+    }
+    draw();
+    raf = requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

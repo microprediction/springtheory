@@ -25,10 +25,13 @@
             <a href="./demo-schur-damping.html">Schur damping</a>
             <a href="./demo-least-squares.html">Least squares as springs</a>
             <a href="./demo-smoother.html">The time-series smoother</a>
+            <a href="./demo-robust-smoother.html">Robust smoothing: median vs Kalman</a>
+            <a href="./demo-huber.html">Huber loss</a>
             <a href="./demo-roll.html">Bid-ask bounce</a>
             <a href="./demo-minvar.html">Minimum variance</a>
             <a href="./demo-pca.html">PCA as a rod on collars</a>
             <a href="./demo-lasso.html">Ridge vs Lasso</a>
+            <a href="./demo-lars.html">Least angle regression</a>
           </div>
         </div>
         <a href="./index.html#reading">Bibliography</a>
@@ -88,7 +91,7 @@
         <a href="./demo-least-squares.html"><strong>Least squares as springs</strong></a>
         &mdash; a rigid rod tied by vertical springs to draggable data points relaxes to the
         ordinary least squares line, after
-        <a href="https://joshualoftus.com/posts/2020-11-23-least-squares-as-springs/least-squares-as-springs.html">Loftus</a>.
+        <a href="https://joshualoftus.com/about.html">Joshua Loftus</a>.
       </li>
       <li>
         <a href="./demo-smoother.html"><strong>The time-series smoother</strong></a> &mdash; a
@@ -96,6 +99,18 @@
         neighbours) relaxes to the Kalman smoother of a local-level model, alias
         Whittaker&ndash;Henderson graduation. Add an observation and watch the whole posterior
         path re-equilibrate.
+      </li>
+      <li>
+        <a href="./demo-robust-smoother.html"><strong>Robust smoothing: median vs Kalman</strong></a>
+        &mdash; the same bead chain, but the measurement springs are reshaped by an exponent
+        dial. At $p=2$ it is the Kalman smoother; slide toward $p=1$ and each spring becomes a
+        constant-tension pull, so the path relaxes to a running median that shrugs off spikes.
+      </li>
+      <li>
+        <a href="./demo-huber.html"><strong>Huber loss</strong></a> &mdash; five points on three
+        rails share one parameter. L2 is a plain spring (mean), L1 a constant-tension pulley
+        (median), and Huber a spring that switches to a capped pull past a threshold $\delta$.
+        Drag the outlier and watch the mean chase it, the median ignore it, and Huber compromise.
       </li>
       <li>
         <a href="./demo-roll.html"><strong>Bid-ask bounce</strong></a> &mdash; a Gaussian Roll

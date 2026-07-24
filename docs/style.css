@@ -40,6 +40,11 @@ header.site-header nav a:hover { opacity: 1; }
   border-radius: 8px; padding: 6px; margin-top: 8px;
   min-width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
+/* transparent bridge across the 8px gap so the menu doesn't vanish
+   while the cursor travels from the trigger down into the menu */
+.nav-dropdown-menu::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px;
+}
 .nav-dropdown:hover .nav-dropdown-menu,
 .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
 .nav-dropdown-menu a {
