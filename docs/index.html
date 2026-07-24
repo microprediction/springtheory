@@ -97,9 +97,13 @@
       Whittaker-Henderson graduation with a first-difference penalty, the older sibling of
       the Hodrick-Prescott filter. Whittaker introduced graduation in 1923. The dashed
       curve is the exact smoother from a tridiagonal solve. The beads obey $F = ma$ with
-      damping. They settle on the same curve. The smoother&apos;s influence is local. A dragged
-      observation disturbs only a few springs&apos; worth of chain. That is why filtering and
-      smoothing agree except near the ends.
+      damping. They settle on the same curve. The filter and the smoother are different objects.
+      The filter at each time sees only the past and the present. The smoother sees the whole
+      record. The two coincide only at the last bead, where there is no future left to add. Every
+      earlier bead has later observations the filter has not reached, so it differs, and it
+      differs most at the start. The smoother&apos;s influence is still local. A dragged
+      observation disturbs only a few springs&apos; worth of chain. So a filter running a few
+      steps behind the present already matches the smoother in the interior.
     </p>
     <p class="lead">
       Every Gaussian belief is a spring. Its negative log-density is a quadratic potential well.
